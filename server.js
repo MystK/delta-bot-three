@@ -331,6 +331,7 @@ const verifyThenAward = async (comment) => {
       if (query.text.length) query.text += '\n\n'
       query.text += text
     }
+    if (author === botUsername) return true
     if (parentThing.author === botUsername) {
       console.log(`BAILOUT parent author, ${parentThing.author} is bot, ${botUsername}`)
       const text = i18n[locale].noAward.db3
@@ -370,10 +371,6 @@ const verifyThenAward = async (comment) => {
     }
     if (issueCount === 0) {
       console.log('THIS ONE IS GOOD. AWARD IT')
-      let text = i18n[locale].awardDelta
-      text = text.replace(/USERNAME/g, parentThing.author).replace(/SUBREDDIT/g, subreddit)
-      if (query.text.length) query.text += '\n\n'
-      query.text += text
       const flairCount = await addOrRemoveDeltaToOrFromWiki(
         {
           user: parentThing.author,
@@ -385,6 +382,10 @@ const verifyThenAward = async (comment) => {
           action: 'add',
         }
       )
+      let text = i18n[locale].awardDelta
+      text = text.replace(/USERNAME/g, parentThing.author).replace(/DELTAS/g, flairCount).replace(/SUBREDDIT/g, subreddit)
+      if (query.text.length) query.text += '\n\n'
+      query.text += text
       await updateFlair({ name: parentThing.author, flairCount })
     }
     query.text += `${i18n[locale].global}\n[​](HTTP://DB3PARAMSSTART\n${JSON.stringify(hiddenParams, null, 2)}\nDB3PARAMSEND)`
