@@ -68,7 +68,7 @@ class DeltaBoardsThree {
         after,
       }
       const { api } = this
-      const commentJson = await api.query(`/user/deltabot/comments?${stringify(commentQuery)}`)
+      const commentJson = await api.query(`/user/${this.credentials.username}/comments?${stringify(commentQuery)}`)
       after = _.get(commentJson, 'data.after')
       if (!after) noMoreComments = true
 
