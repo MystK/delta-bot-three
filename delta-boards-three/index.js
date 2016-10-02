@@ -5,9 +5,10 @@ import parseHiddenParams from './../parse-hidden-params'
 import getWikiContent from './../get-wiki-content'
 
 class DeltaBoardsThree {
-  constructor({ credentials, version }) {
+  constructor({ credentials, version, flags }) {
     this.credentials = credentials // this is used to log into the Reddit API
     this.version = version // this is used to mark the headers of the API calls
+    this.flags = flags // can be used to read the `isDebug` flag, used in RedditAPIDriver as well
   }
   // this method is called by DB3 main code. It starts
   // the whole process of updating the Delta Boards
@@ -16,7 +17,7 @@ class DeltaBoardsThree {
     const { credentials, version } = this
 
     // instantiate a new reddit API with the credentials and version
-    this.api = new Api(credentials, version, './delta-boards-three/')
+    this.api = new Api(credentials, version, './delta-boards-three/', this.flags)
 
     // make the api a variable so we don't access it from 'this' all the time
     const { api } = this

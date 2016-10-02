@@ -5,6 +5,7 @@
   "main": "entry.js",
   "scripts": {
     "start": "supervisor -w entry.js,server.js,RedditAPIDriver,delta-boards-three entry",
+    "start-debug": "node ./entry.js --debug",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {

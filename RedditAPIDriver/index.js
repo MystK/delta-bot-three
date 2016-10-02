@@ -8,9 +8,10 @@ import _ from 'lodash'
 fs.readFile = promisify(fs.readFile)
 
 module.exports = class RedditAPIDriver {
-  constructor(credentials, version, sessionPath) {
-    this.sessionPath = sessionPath || './'
+  constructor(credentials, version, sessionPath, flags) {
+    this.sessionPath = sessionPath
     this.credentials = credentials
+    this.flags = flags
     this.headers = {}
     this.baseURL = 'https://oauth.reddit.com'
     this.version = version
@@ -112,7 +113,10 @@ module.exports = class RedditAPIDriver {
             retry(res, rej)
           }
         } else if (statusCode === 401 || statusCode === 403) {
-          console.log('75 R_API')
+          console.log('75 R_API (status was 401 or 403)')
+          if (this.flags.isDebug) {
+            console.log(response)
+          }
           await this.connect({ type: 'GET_NEW_SESSION' })
           retry(res, rej)
         } else if (statusCode === 404) {

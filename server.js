@@ -16,7 +16,12 @@ import i18n from './i18n'
 import parseHiddenParams from './parse-hidden-params'
 import getWikiContent from './get-wiki-content'
 
-console.log('server.js called!'.gray)
+const isDebug = _.some(process.argv, arg => {
+  return arg === '--debug'
+})
+if (isDebug) {
+  console.log('server.js called!  running in debug mode')
+}
 
 const last = []
 setInterval(() => {
@@ -60,7 +65,8 @@ const packageJson = require('./package.json')
 
 const subreddit = credentials.subreddit
 const botUsername = credentials.username
-const reddit = new Reddit(credentials, packageJson.version)
+const flags = { isDebug }
+const reddit = new Reddit(credentials, packageJson.version, './', flags)
 
 const getNewComments = async (recursiveList) => {
   console.log('Making comments call!')
@@ -216,7 +222,7 @@ const addOrRemoveDeltaToOrFromWiki = async ({
       }
       return hiddenParams
     } catch (err) {
-      console.log('216')
+      console.log('216 - failed to create wiki hidden params')
       console.log(err)
       return {
         comment: i18n[locale].hiddenParamsComment,
@@ -733,6 +739,7 @@ const entry = async () => {
     const deltaBoardsThree = new DeltaBoardsThree({
       credentials: deltaBoardsThreeCredentials,
       version: packageJson.version,
+      flags
     })
     deltaBoardsThree.initialStart()
   } catch (err) {
