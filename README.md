@@ -9,7 +9,7 @@ Any contributions are much appreciated. Please keep your PRs to 1 commit and put
 1. `git clone https://github.com/MystK/delta-bot-three.git`
 1. `cd delta-bot-three`
 1. Mac/Linux: `nvm install && nvm use ` Windows: Look inside the .nvmrc folder to find the version. EX: 5.8.0 is the version. `nvm install 5.8.0 && nvm use 5.8.0`
-1. create a subreddit
+1. create a subreddit.  after creation, ensure that "mod editing" for the subreddit's wiki is enabled, and make you bot account a moderator for the subreddit
 1. get a Reddit API key by going to https://www.reddit.com/prefs/apps/ => create another app => https://i.imgur.com/xMUa521.png
 1. create a `credentials.json` that looks like below
 1. `npm start` and it should work
