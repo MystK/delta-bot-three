@@ -55,13 +55,15 @@ module.exports = class RedditAPIDriver {
     return true
   }
   async query(params, noOauth, wiki, count = 0) {
+    const paramsReadable = _.isString(params) ? `GET ${params}` : `${params.method} ${params.URL}`
+    const debugInfo = this.flags.isDebug ? ` for request (${paramsReadable})` : '';
     try {
       return await new Promise(async (res, rej) => {
         let gotResponse
-        const retry = (resRetry, rejRetry, useCount) => {
-          console.log('Retrying in 10 seconds! R_API')
-          if (useCount && count >= 5) rejRetry(Error('Something happened! There was 5 404s!'))
+        const retry = (resRetry, rejRetry) => {
+          if (count >= 5) rejRetry(Error(`Something happened! There were 5 errors! R_API${debugInfo}`))
           else {
+            console.log(`Retrying in 10 seconds! R_API${debugInfo}`)
             setTimeout(async () => {
               resRetry(await this.query(params, noOauth, wiki, count + 1))
             }, 10000)
@@ -109,13 +111,17 @@ module.exports = class RedditAPIDriver {
               ]
             )
             if (Object.keys(headers).length) console.log(rateHeaders)
+            if (this.flags.isDebug) {
+              console.log('SUCCESS (200)'.green, `${debugInfo}`)
+            }
           } catch (error) {
             retry(res, rej)
           }
         } else if (statusCode === 401 || statusCode === 403) {
           console.log('75 R_API (status was 401 or 403)')
           if (this.flags.isDebug) {
-            console.log(response)
+            response.body = (await response.text()).substr(0, 1000)
+            console.log(_.pick(response, 'url', 'status', 'statusText', 'body'))
           }
           await this.connect({ type: 'GET_NEW_SESSION' })
           retry(res, rej)
@@ -127,7 +133,7 @@ module.exports = class RedditAPIDriver {
         }
       })
     } catch (err) {
-      console.log('89 R_API')
+      console.log(`89 R_API${debugInfo}`)
       console.log(err)
       return false
     }
