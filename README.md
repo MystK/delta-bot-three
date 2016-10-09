@@ -13,6 +13,7 @@ Any contributions are much appreciated. Please keep your PRs to 1 commit and put
 1. get a Reddit API key by going to https://www.reddit.com/prefs/apps/ => create another app => https://i.imgur.com/xMUa521.png
 1. create a `credentials.json` that looks like below
 1. `npm start` and it should work
+1. Commit messages should follow the [AngularJS](https://github.com/angular/angular.js/blob/master/CONTRIBUTING.md#commit) commit guidelines
 1. Before submitting any pull request, ensure that `npm run test` passes with no errors
 
 #### credentials.json
@@ -29,6 +30,7 @@ Any contributions are much appreciated. Please keep your PRs to 1 commit and put
 ### A special thanks to everyone who contributed
 _Please add yourself to this list if you've contributed content to this effort_
 * @roastchicken
+* [wyantb](https://github.com/wyantb)
 
 ## Roadmap
 ### The first three months ✓
