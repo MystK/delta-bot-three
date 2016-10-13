@@ -1,6 +1,6 @@
 {
   "en-us": {
-    "awardDelta": "Confirmed: 1 delta awarded to USERNAME ([DELTAS∆](/r/SUBREDDIT/wiki/user/USERNAME)).",
+    "awardDelta": "Confirmed: 1 delta awarded to /u/USERNAME ([DELTAS∆](/r/SUBREDDIT/wiki/user/USERNAME)).",
     "noAward": {
       "littleText": "The length of your comment suggests that you haven't explained how /u/PARENTUSERNAME changed your view (comment rule 4).\n\nIn the future, DeltaBot will be able to rescan edited comments. In the mean time, please repost a new comment with the required explanation so that DeltaBot can see it.",
       "op": "You cannot award OP a delta as the moderators feel that allowing so would send the wrong message. If you were trying show the OP how to award a delta, please do so without using the delta symbol unless it's included in a reddit quote.",
