@@ -235,7 +235,7 @@ class DeltaBoardsThree {
 
         // create the string that will go into the sidebar
         const newTableToPutIn = `
-###### **Monthly Deltaboard**
+###### Monthly Deltaboard
 
 | Rank | Username | Deltas |
 | :------: | :------: | :------: |
