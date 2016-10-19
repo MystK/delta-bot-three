@@ -1,4 +1,4 @@
-const entities = require('html-entities').AllHtmlEntities
+import { AllHtmlEntities as entities} from 'html-entities'
 
 export default async ({ api, subreddit, wikiPage }) => {
   try {

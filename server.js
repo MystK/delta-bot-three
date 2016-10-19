@@ -10,6 +10,7 @@ import Koa from 'koa'
 import Router from 'koa-router'
 */
 import fs from 'fs'
+import { join } from 'path'
 import { stringify } from 'query-string'
 // import bodyParser from 'koa-bodyparser'
 import Reddit from './RedditAPIDriver'
@@ -39,9 +40,9 @@ let state
 let lastParsedCommentIDs
 let lastParsedCommentID
 try {
-  /* eslint-disable import/no-unresolved */
-  state = require('./state.json')
-  /* eslint-enable import/no-unresolved */
+  state = JSON.parse(
+    fs.readFileSync(join(__dirname, './state.json'))
+  )
 
   lastParsedCommentIDs = state.lastParsedCommentIDs
   lastParsedCommentID = lastParsedCommentIDs[0]
@@ -53,9 +54,9 @@ try {
 }
 let credentials
 try {
-  /* eslint-disable import/no-unresolved */
-  credentials = require('./credentials')
-  /* eslint-enable import/no-unresolved */
+  credentials = JSON.parse(
+    fs.readFileSync(join(__dirname, './credentials.json'))
+  )
 } catch (err) {
   console.log('Missing credentials!'.red)
   console.log('Please contact the author for credentials or create your own credentials json!'.red)
@@ -67,7 +68,9 @@ try {
   "subreddit": "Your subreddit to moderate"
 }`.red)
 }
-const packageJson = require('./package.json')
+const packageJson = JSON.parse(
+  fs.readFileSync(join(__dirname, './package.json'))
+)
 
 const subreddit = credentials.subreddit
 const botUsername = credentials.username
@@ -748,11 +751,15 @@ const entry = async () => {
     let deltaBoardsThreeCredentials
     /* eslint-disable import/no-unresolved */
     try {
-      deltaBoardsThreeCredentials = require('./delta-boards-three-credentials')
+      deltaBoardsThreeCredentials = JSON.parse(
+        fs.readFileSync(join(__dirname, './delta-boards-three-credentials.json'))
+      )
     } catch (err) {
       console.log('Missing credentials for delta-boards-three! Using base creds as fallback!'.red)
       try {
-        deltaBoardsThreeCredentials = require('./credentials')
+        deltaBoardsThreeCredentials = JSON.parse(
+          fs.readFileSync(join(__dirname, './credentials.json'))
+        )
       } catch (secondErr) {
         console.log(
           'Please contact the author for credentials or create your own credentials json!'.red
