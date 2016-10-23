@@ -12,6 +12,8 @@ Any contributions are much appreciated. Please keep your PRs to 1 commit and put
 1. Create a subreddit.  after creation, ensure that "mod editing" for the subreddit's wiki is enabled, and make you bot account a moderator for the subreddit
 1. Get a Reddit API key by going to https://www.reddit.com/prefs/apps/ => create another app => https://i.imgur.com/xMUa521.png
 1. Create a `credentials.json` that looks like below
+1. `npm install`
+1. `npm run build`
 1. `npm start` and it should work
 1. Commit messages should follow the [AngularJS](https://github.com/angular/angular.js/blob/master/CONTRIBUTING.md#commit) commit guidelines
 1. Before submitting any pull request, ensure that `npm run test` passes with no errors
