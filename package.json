@@ -4,7 +4,7 @@
   "description": "The third rewrite of delta bot",
   "main": "entry.js",
   "scripts": {
-    "start": "supervisor -w ./lib/server.js ./lib/server.js",
+    "start": "supervisor -w ./lib/server.js -- ./lib/server.js",
     "start-debug": "node ./entry.js --debug",
     "test": "eslint ./RedditAPIDriver ./delta-boards-three server.js",
     "build": "browserify --node --no-bundle-external ./entry.js -t babelify -o ./lib/server.js",
