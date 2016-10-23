@@ -20,6 +20,7 @@ import parseHiddenParams from './parse-hidden-params'
 import getWikiContent from './get-wiki-content'
 
 const isDebug = _.some(process.argv, arg => arg === '--debug')
+const bypassOPCheck = _.some(process.argv, arg => arg === '--bypass-op-check')
 if (isDebug) {
   console.log('server.js called!  running in debug mode')
 }
@@ -354,7 +355,7 @@ const verifyThenAward = async (comment) => {
         (
             !parentID.match(/^t1_/g) ||
             parentThing.author === listing.author
-        ) && author.toLowerCase() !== 'mystk'
+        ) && bypassOPCheck === false
     ) {
       console.log(
         `BAILOUT parent author, ${parentThing.author} is listing author, ${listing.author}`
