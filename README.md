@@ -49,5 +49,6 @@ _Please add yourself to this list if you've contributed:_
 * ~~Implement first-time-delta PMs [#14](https://github.com/MystK/delta-bot-three/issues/14).~~
 * Yearly Deltaboard [#36](https://github.com/MystK/delta-bot-three/issues/36).
 * All-Time Deltaboard [#34](https://github.com/MystK/delta-bot-three/issues/34).
+* DeltaBot's Stickied Comment [#86](https://github.com/MystK/delta-bot-three/issues/86).
 * Admin Interface [#38](https://github.com/MystK/delta-bot-three/issues/38).
 * The remaining issues in any order: https://github.com/MystK/delta-bot-three/issues
