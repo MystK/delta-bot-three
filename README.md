@@ -38,6 +38,7 @@ _Please add yourself to this list if you've contributed:_
 * [roastchicken](https://github.com/roastchicken)
 * [wyantb](https://github.com/wyantb)
 * [stedop](https://github.com/stedop)
+* [sahuk](https://github.com/sahuk)
 
 ## Roadmap
 ### The first three months ✓
@@ -49,6 +50,7 @@ _Please add yourself to this list if you've contributed:_
 * ~~Implement first-time-delta PMs [#14](https://github.com/MystK/delta-bot-three/issues/14).~~
 * Yearly Deltaboard [#36](https://github.com/MystK/delta-bot-three/issues/36).
 * All-Time Deltaboard [#34](https://github.com/MystK/delta-bot-three/issues/34).
-* DeltaBot's Stickied Comment [#86](https://github.com/MystK/delta-bot-three/issues/86).
+* /r/DeltaLog [#17](https://github.com/MystK/delta-bot-three/issues/17).
+* DeltaBot's Stickied Comment [#89](https://github.com/MystK/delta-bot-three/issues/89).
 * Admin Interface [#38](https://github.com/MystK/delta-bot-three/issues/38).
 * The remaining issues in any order: https://github.com/MystK/delta-bot-three/issues
