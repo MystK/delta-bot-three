@@ -2,14 +2,14 @@
   "name": "delta-bot-three",
   "version": "3.4.1",
   "description": "The third rewrite of delta bot",
-  "main": "entry.js",
+  "main": "dist/index.js",
   "scripts": {
-    "start": "supervisor -w ./lib/server.js -- ./lib/server.js",
-    "start-debug": "node ./entry.js --debug",
+    "start": "nodemon ./src/index.js -x babel-node -w ./i18n -w ./src",
+    "startProduction": "npm run build && nodemon ./dist/index.js -w ./dist",
+    "start-debug": "babel-node ./src --debug",
     "test": "npm run eslint && jest && npm run build",
     "eslint": "eslint ./src",
-    "build": "browserify --node --no-bundle-external ./src/index.js -t babelify -o ./lib/server.js",
-    "watch": "watchify --node --no-bundle-external ./src/index.js -t babelify -o ./lib/server.js"
+    "build": "babel src --out-dir dist --ignore spec.js"
   },
   "repository": {
     "type": "git",
@@ -22,33 +22,27 @@
   },
   "homepage": "https://github.com/MystK/delta-bot-three#readme",
   "devDependencies": {
+    "babel-cli": "^6.18.0",
     "babel-eslint": "^6.1.2",
     "babel-jest": "^17.0.0",
     "babel-plugin-transform-runtime": "^6.15.0",
-    "babel-register": "^6.18.0",
-    "babelify": "^7.3.0",
-    "browserify": "^13.1.0",
+    "babel-preset-es2015": "^6.5.0",
+    "babel-preset-stage-3": "^6.5.0",
     "eslint": "^3.4.0",
     "eslint-config-airbnb-base": "^5.0.3",
     "eslint-plugin-import": "^1.14.0",
     "jest-cli": "^17.0.0",
-    "watchify": "^3.7.0"
+    "nodemon": "^1.11.0"
   },
   "dependencies": {
-    "babel-polyfill": "^6.16.0",
-    "babel-preset-es2015": "^6.5.0",
-    "babel-preset-stage-3": "^6.5.0",
     "colors": "^1.1.2",
     "form-urlencoded": "^1.2.0",
     "html-entities": "^1.2.0",
-    "koa": "^2.0.0-alpha.3",
-    "koa-bodyparser": "^3.2.0",
-    "koa-router": "^7.0.1",
     "lodash": "^4.3.0",
+    "mkdirp": "^0.5.1",
     "node-fetch": "^1.3.3",
     "promisify-node": "^0.3.0",
-    "query-string": "^3.0.0",
-    "supervisor": "^0.9.1"
+    "query-string": "^3.0.0"
   },
   "jest": {
     "testEnvironment": "node"

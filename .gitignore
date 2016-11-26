@@ -2,3 +2,4 @@ node_modules
 *credentials.json
 *-session.json
 state.json
+dist

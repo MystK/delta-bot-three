@@ -2,22 +2,24 @@
 Corner Cases
 Edited comments are not handled
 */
-import 'babel-polyfill'
 import 'colors'
 import _ from 'lodash'
 import promisify from 'promisify-node'
+import mkdirp from 'mkdirp'
 /*
 import Koa from 'koa'
 import Router from 'koa-router'
 */
 import fs from 'fs'
 import { stringify } from 'query-string'
+import path from 'path'
 // import bodyParser from 'koa-bodyparser'
 import Reddit from './reddit-api-driver'
 import DeltaBoardsThree from './delta-boards-three'
-import i18n from './i18n'
 import parseHiddenParams from './parse-hidden-params'
 import getWikiContent from './get-wiki-content'
+
+const i18n = require(path.resolve('i18n'))
 
 const isDebug = _.some(process.argv, arg => arg === '--debug')
 const bypassOPCheck = _.some(process.argv, arg => arg === '--bypass-op-check')
@@ -36,14 +38,32 @@ const locale = 'en-us'
 const app = new Koa()
 const router = new Router()
 */
+mkdirp.sync('./config/credentials')
+mkdirp.sync('./config/state')
+
 fs.writeFile = promisify(fs.writeFile)
+let credentials
+try {
+  credentials = require(path.resolve('./config/credentials/credentials.json'))
+} catch (err) {
+  console.log('Missing credentials!'.red)
+  console.log('Please create your own credentials json!'.red)
+  console.log('Put it into ./config/credentials/credentials.json!'.red)
+  console.log(`{
+  "username": "Your Reddit username",
+  "password": "Your Reddit password",
+  "clientID": "Your application ID",
+  "clientSecret": "Your application secret",
+  "subreddit": "Your subreddit to moderate"
+}`.red)
+  process.exit()
+}
+
 let state
 let lastParsedCommentIDs
 let lastParsedCommentID
 try {
-  state = JSON.parse(
-    fs.readFileSync('./state/state.json')
-  )
+  state = require(path.resolve('./config/state/state.json'))
 
   lastParsedCommentIDs = state.lastParsedCommentIDs
   lastParsedCommentID = lastParsedCommentIDs[0]
@@ -53,26 +73,7 @@ try {
   lastParsedCommentIDs = []
   lastParsedCommentID = null
 }
-let credentials
-try {
-  credentials = JSON.parse(
-    fs.readFileSync('./credentials/credentials.json')
-  )
-} catch (err) {
-  console.log('Missing credentials!'.red)
-  console.log('Please create your own credentials json!'.red)
-  console.log('Put it into ./credentials/credentials.json!'.red)
-  console.log(`{
-  "username": "Your Reddit username",
-  "password": "Your Reddit password",
-  "clientID": "Your application ID",
-  "clientSecret": "Your application secret",
-  "subreddit": "Your subreddit to moderate"
-}`.red)
-}
-const packageJson = JSON.parse(
-  fs.readFileSync('./package.json')
-)
+const packageJson = require(path.resolve('./package.json'))
 
 const subreddit = credentials.subreddit
 const botUsername = credentials.username
@@ -98,17 +99,21 @@ const getNewComments = async (recursiveList) => {
     for (let i = 0; i < 4; ++i) {
       lastParsedCommentIDs.push(_.get(response, ['data', 'children', i, 'data', 'name']))
     }
-    await fs.writeFile('./state/state.json', JSON.stringify({ lastParsedCommentIDs }, null, 2))
+    await fs.writeFile(
+      './config/state/state.json', JSON.stringify({ lastParsedCommentIDs }, null, 2)
+    )
     if (lastParsedCommentIDs.length === 0) {
       lastParsedCommentID = null
-      await fs.writeFile('./state/state.json', '{}')
+      await fs.writeFile('./config/state/state.json', '{}')
 
       const stateResponse = await reddit.query(`/r/${subreddit}/comments.json`, true)
       if (stateResponse.error) throw Error(stateResponse.error)
       for (let i = 0; i < 5; ++i) {
         lastParsedCommentIDs.push(_.get(stateResponse, ['data', 'children', i, 'data', 'name']))
       }
-      await fs.writeFile('./state/state.json', JSON.stringify({ lastParsedCommentIDs }, null, 2))
+      await fs.writeFile(
+        './config/state/state.json', JSON.stringify({ lastParsedCommentIDs }, null, 2)
+      )
       lastParsedCommentID = lastParsedCommentIDs[0]
     }
   }
@@ -127,7 +132,9 @@ const getNewComments = async (recursiveList) => {
     for (let i = 0; i < 4; ++i) {
       lastParsedCommentIDs.push(_.get(response, ['data', 'children', i, 'data', 'name']))
     }
-    await fs.writeFile('./state/state.json', JSON.stringify({ lastParsedCommentIDs }, null, 2))
+    await fs.writeFile(
+      './config/state/state.json', JSON.stringify({ lastParsedCommentIDs }, null, 2)
+    )
   }
   switch (true) {
     case (commentEntriesLength === 25):
@@ -741,7 +748,9 @@ const entry = async () => {
       for (let i = 0; i < 5; ++i) {
         lastParsedCommentIDs.push(_.get(response, ['data', 'children', i, 'data', 'name']))
       }
-      await fs.writeFile('./state/state.json', JSON.stringify({ lastParsedCommentIDs }, null, 2))
+      await fs.writeFile(
+        './config/state/state.json', JSON.stringify({ lastParsedCommentIDs }, null, 2)
+      )
       lastParsedCommentID = lastParsedCommentIDs[0]
     }
     checkForDeltas()
@@ -753,15 +762,13 @@ const entry = async () => {
     let deltaBoardsThreeCredentials
     /* eslint-disable import/no-unresolved */
     try {
-      deltaBoardsThreeCredentials = JSON.parse(
-        fs.readFileSync('./credentials/delta-boards-three-credentials.json')
+      deltaBoardsThreeCredentials = require(
+        path.resolve('./config/credentials/delta-boards-three-credentials.json')
       )
     } catch (err) {
       console.log('Missing credentials for delta-boards-three! Using base creds as fallback!'.red)
       try {
-        deltaBoardsThreeCredentials = JSON.parse(
-          fs.readFileSync('./credentials/credentials.json')
-        )
+        deltaBoardsThreeCredentials = require(path.resolve('./config/credentials/credentials.json'))
       } catch (secondErr) {
         console.log(
           'Please contact the author for credentials or create your own credentials json!'.red
