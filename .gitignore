@@ -3,3 +3,4 @@ node_modules
 *-session.json
 state.json
 dist
+.idea
