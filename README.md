@@ -45,12 +45,12 @@ _Please add yourself to this list if you've contributed:_
 - [x] Rewrite what DeltaBot currently does and migrate all old data over.
 
 ### To-Do
-- [ ] Have DeltaBot automatically rescan edited comments [#4](https://github.com/MystK/delta-bot-three/issues/4).
-- [ ] Solve the missing deltas issue (Quick Fix: [#35](https://github.com/MystK/delta-bot-three/issues/35), Ideal Scenario: [#33](https://github.com/MystK/delta-bot-three/issues/33)).
+- [ ] Make DeltaBot automatically rescan edited comments [#4](https://github.com/MystK/delta-bot-three/issues/4).
+- [ ] Solve the missing deltas issue [#119](https://github.com/MystK/delta-bot-three/issues/119).
 - [x] Implement first-time-delta PMs [#14](https://github.com/MystK/delta-bot-three/issues/14).
 - [ ] Yearly Deltaboard [#36](https://github.com/MystK/delta-bot-three/issues/36).
 - [ ] All-Time Deltaboard [#34](https://github.com/MystK/delta-bot-three/issues/34).
-- [ ] /r/DeltaLog [#17](https://github.com/MystK/delta-bot-three/issues/17).
-- [ ] DeltaBot's Stickied Comment [#89](https://github.com/MystK/delta-bot-three/issues/89).
+- [x] /r/DeltaLog [#17](https://github.com/MystK/delta-bot-three/issues/17).
+- [x] DeltaBot's Stickied Comment [#89](https://github.com/MystK/delta-bot-three/issues/89).
 - [ ] Admin Interface [#38](https://github.com/MystK/delta-bot-three/issues/38).
 - [ ] The remaining issues in any order: https://github.com/MystK/delta-bot-three/issues
