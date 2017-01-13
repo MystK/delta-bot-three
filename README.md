@@ -9,6 +9,7 @@ The third rewrite of delta bot, created for [reddit.com/r/changemyview](https://
 * Put the issue number in your commit message if it is associated with one.
 * Commit messages should follow the [AngularJS](https://github.com/angular/angular.js/blob/master/CONTRIBUTING.md#commit) commit guidelines.
 * Before submitting any pull request, ensure that `npm test` passes with no errors.
+* We have a slack chat (deltabotdevs.slack.com). If you'd like to join, please give your email address to Snorrrlax or MystK (either here or in a reddit PM).
 
 ### How to build
 1. Download nvm. Mac/Linux: https://github.com/creationix/nvm Windows: https://github.com/coreybutler/nvm-windows/releases/download/1.1.1/nvm-setup.zip
