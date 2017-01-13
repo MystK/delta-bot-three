@@ -5,3 +5,6 @@ state.json
 dist
 .idea
 *.log
+
+# for vim temp files
+*.swp
