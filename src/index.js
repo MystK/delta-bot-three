@@ -519,7 +519,9 @@ const findOrMakeDeltaLogPost = async (linkID, comment, parentThing) => {
     return possiblyExistingPost
   }
   // otherwise, create it & add the delta details to appropriate section
-  const deltaLogSubject = deltaLogSubjectTemplate({ title: comment.link_title.replace("&amp;", "&") })
+  const deltaLogSubject = deltaLogSubjectTemplate(
+      { title: comment.link_title.replace('&amp;', '&') }
+  )
   const deltaLogCreationParams = {
     opUsername: comment.link_author,
     linkToPost: comment.link_url,
