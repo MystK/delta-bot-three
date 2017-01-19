@@ -21,8 +21,8 @@ module.exports = class RedditAPIDriver {
     let json
     const { type } = options
     if (type === 'GET_NEW_SESSION') {
-      const { username, password, clientID, clientSecret } = this.credentials
-      const auth = new Buffer(`${clientID}:${clientSecret}`).toString('base64')
+      const { username, password, clientId, clientSecret } = this.credentials
+      const auth = new Buffer(`${clientId}:${clientSecret}`).toString('base64')
       const res = await fetch('https://www.reddit.com/api/v1/access_token', {
         method: 'POST',
         headers: {

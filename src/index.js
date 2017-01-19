@@ -20,11 +20,20 @@ import DeltaBoardsThree from './delta-boards-three'
 import parseHiddenParams from './parse-hidden-params'
 import stringifyObjectToBeHidden from './stringify-hidden-params'
 import getWikiContent from './get-wiki-content'
+import Modules from './modules'
+import {
+  checkCommentForDelta,
+  generateDeltaBotCommentFromDeltaComment,
+  getDeltaBotReply,
+  getCommentAuthor,
+} from './utils'
+import upgradeConfig from './upgrade-config'
+
+upgradeConfig()
 
 const i18n = require(path.resolve('i18n'))
 
 const isDebug = _.some(process.argv, arg => arg === '--db3-debug')
-const bypassOPCheck = _.some(process.argv, arg => arg === '--bypass-op-check')
 const deltaLogEnabled = _.some(process.argv, arg => arg === '--enable-delta-log')
 if (isDebug) {
   console.log('server.js called!  running in debug mode')
@@ -51,7 +60,7 @@ function logCredentialsFile() {
   console.log(`{
   "username": "Your Reddit username",
   "password": "Your Reddit password",
-  "clientID": "Your application ID",
+  "clientId": "Your application ID",
   "clientSecret": "Your application secret",
   "subreddit": "Your subreddit to moderate",
   "deltaLogSubreddit": "Your subreddit to post delta logs to"
@@ -83,7 +92,11 @@ try {
 }
 const packageJson = require(path.resolve('./package.json'))
 
-const subreddit = credentials.subreddit
+const configJsonPath = path.join(process.cwd(), 'config/config.json')
+const configJson = require(path.resolve(configJsonPath))
+
+const deltaLogSubreddit = configJson.deltaLogSubreddit
+const subreddit = configJson.subreddit
 const botUsername = credentials.username
 const flags = { isDebug, deltaLogEnabled }
 const reddit = new Reddit(credentials, packageJson.version, 'main', flags)
@@ -359,7 +372,7 @@ const makeComment = async (commentArgs) => {
 /* When DB3 starts up, it doesn't have { PostId, LogId, StickyCommentId } mappings, so load them */
 const loadDeltaLogFromWiki = async () => {
   const rawInternalWikiText = await reddit.query({
-    URL: `/r/${credentials.deltaLogSubreddit}/wiki/internal`,
+    URL: `/r/${deltaLogSubreddit}/wiki/internal`,
     method: 'GET',
   })
   if (rawInternalWikiText.error) throw Error(rawInternalWikiText)
@@ -370,7 +383,7 @@ const loadDeltaLogFromWiki = async () => {
 // used for storing both sticky comment info in original post, which links to the DeltaLog mirror
 let deltaLogKnownPosts = null
 
-const wasDeltaMadeByAuthor = (comment) => comment.link_author === comment.author
+const wasDeltaMadeByAuthor = (comment) => comment.link_author === getCommentAuthor(comment)
 const TRUNCATE_AWARD_LENGTH = 200
 const truncateAwardedText = (text) => {
   if (text.length > TRUNCATE_AWARD_LENGTH) {
@@ -402,9 +415,9 @@ const findOrMakeStickiedComment = async (linkID, comment, deltaLogPost) => {
     content: {
       thing_id: linkID,
       text: deltaLogStickyTemplate({
-        username: comment.author,
-        linkToPost: `/r/${credentials.deltaLogSubreddit}/comments/${deltaLogPost.deltaLogPostID}`,
-        deltaLogSubreddit: credentials.deltaLogSubreddit,
+        username: getCommentAuthor(comment),
+        linkToPost: `/r/${deltaLogSubreddit}/comments/${deltaLogPost.deltaLogPostID}`,
+        deltaLogSubreddit,
       }),
     },
   })
@@ -415,7 +428,7 @@ const findOrMakeStickiedComment = async (linkID, comment, deltaLogPost) => {
 /* Gets the text of a DeltaLog post, for use when updating the log */
 const loadPostText = async (deltaLogPostID) => {
   const postDetails = await reddit.query({
-    URL: `/r/${credentials.deltaLogSubreddit}/comments/${deltaLogPostID}/.json`,
+    URL: `/r/${deltaLogSubreddit}/comments/${deltaLogPostID}/.json`,
     method: 'GET',
   })
   if (postDetails.error) throw Error(postDetails.error)
@@ -425,8 +438,8 @@ const loadPostText = async (deltaLogPostID) => {
 }
 
 const mapDeltaLogCommentEntry = (comment, parentThing) => ({
-  awardingUsername: comment.author,
-  awardedUsername: parentThing.author,
+  awardingUsername: getCommentAuthor(comment),
+  awardedUsername: getCommentAuthor(parentThing),
   awardedText: formatAwardedText(parentThing.body),
   awardedLink: comment.link_url + parentThing.id,
   deltaCommentFullName: comment.name,
@@ -519,7 +532,9 @@ const findOrMakeDeltaLogPost = async (linkID, comment, parentThing) => {
     return possiblyExistingPost
   }
   // otherwise, create it & add the delta details to appropriate section
-  const deltaLogSubject = deltaLogSubjectTemplate({ title: comment.link_title })
+  const deltaLogSubject = deltaLogSubjectTemplate(
+      { title: comment.link_title.replace('&amp;', '&') }
+  )
   const deltaLogCreationParams = {
     opUsername: comment.link_author,
     linkToPost: comment.link_url,
@@ -529,7 +544,7 @@ const findOrMakeDeltaLogPost = async (linkID, comment, parentThing) => {
   const postParams = {
     api_type: 'json',
     kind: 'self',
-    sr: credentials.deltaLogSubreddit,
+    sr: deltaLogSubreddit,
     text: deltaLogContent,
     title: deltaLogSubject,
   }
@@ -557,7 +572,7 @@ const updateDeltaLogWikiLinks = async () => {
     reason: 'DeltaBot update',
   }
   const update = await reddit.query({
-    URL: `/r/${credentials.deltaLogSubreddit}/api/wiki/edit`,
+    URL: `/r/${deltaLogSubreddit}/api/wiki/edit`,
     method: 'POST',
     body: stringify(postParams),
   })
@@ -565,90 +580,22 @@ const updateDeltaLogWikiLinks = async () => {
   return update
 }
 
-const verifyThenAward = async (comment) => {
+export const verifyThenAward = async (comment) => {
   const {
     created_utc: createdUTC,
-    author, body,
     link_id: linkID,
     link_title: linkTitle,
     link_url: linkURL,
     id,
-    name,
-    parent_id: parentID,
   } = comment
   try {
-    if (isDebug) console.log(author, body, linkID, parentID)
-    const hiddenParams = {
-      comment: i18n[locale].hiddenParamsComment,
-      issues: {},
-      parentUserName: null,
-    }
-    const issues = hiddenParams.issues
-    const query = {
-      parent: name,
-      text: '',
-    }
-    const json = await reddit.query(
-        `/r/${subreddit}/comments/${linkID.slice(3)}/?comment=${parentID.slice(3)}`
-    )
-    if (json.error) throw Error(json.error)
-    const parentThing = json[1].data.children[0].data
-    const listing = json[0].data.children[0].data
-    if (parentThing.author === '[deleted]') return true
-    if (author === botUsername) return true
-    hiddenParams.parentUserName = parentThing.author
-    if (
-        (
-            !parentID.match(/^t1_/g) ||
-            parentThing.author === listing.author
-        ) && bypassOPCheck === false
-    ) {
-      console.log(
-        `BAILOUT parent author, ${parentThing.author} is listing author, ${listing.author}`
-      )
-      const text = i18n[locale].noAward.op
-      issues.op = 1
-      if (query.text.length) query.text += '\n\n'
-      query.text += text
-    }
-    if (parentThing.author === botUsername) {
-      console.log(`BAILOUT parent author, ${parentThing.author} is bot, ${botUsername}`)
-      const text = i18n[locale].noAward.db3
-      issues.db3 = 1
-      if (query.text.length) query.text += '\n\n'
-      query.text += text
-    }
-    if (parentThing.author === author && author.toLowerCase() !== 'mystk') {
-      console.log(`BAILOUT parent author, ${parentThing.author} is author, ${author}`)
-      const text = i18n[locale].noAward.self
-      issues.self = 1
-      if (query.text.length) query.text += '\n\n'
-      query.text += text
-    }
-    let issueCount = Object.keys(issues).length
-    const rejected = i18n[locale].noAward.rejected
-    // if there are issues, append the issues i18n to the DeltaBot comment
-    if (issueCount) {
-      // if there are multiple issues, stick at the top that there are multiple issues
-      if (issueCount >= 2) {
-        let issueCi18n = i18n[locale].noAward.issueCount
-        issueCi18n = issueCi18n.replace(/ISSUECOUNT/g, issueCount)
-        query.text = `${rejected} ${issueCi18n}\n\n${query.text}`
-      } else {
-        query.text = `${rejected} ${query.text}`
-      }
-    // if there are no issues yet, then check for comment length. checking for this
-    // last allows it to be either the issues above or this one
-    } else if (body.length < 50) {
-      console.log(`BAILOUT body length, ${body.length}, is shorter than 50`)
-      let text = i18n[locale].noAward.littleText
-      issues.littleText = 1
-      text = text.replace(/PARENTUSERNAME/g, parentThing.author)
-      if (query.text.length) query.text += '\n\n'
-      query.text += text
-      query.text = `${rejected} ${query.text}`
-    }
-    issueCount = Object.keys(issues).length
+    const {
+      issueCount,
+      parentThing,
+      query,
+      hiddenParams,
+    } = await generateDeltaBotCommentFromDeltaComment({ comment, botUsername, reddit, subreddit })
+    if (!query) return true
     if (issueCount === 0) {
       console.log('THIS ONE IS GOOD. AWARD IT')
       const flairCount = await addOrRemoveDeltaToOrFromWiki(
@@ -657,13 +604,13 @@ const verifyThenAward = async (comment) => {
           id,
           linkTitle,
           linkURL,
-          author,
+          author: getCommentAuthor(comment),
           createdUTC,
           action: 'add',
         }
       )
       let text = i18n[locale].awardDelta
-      text = text.replace(/USERNAME/g, parentThing.author)
+      text = text.replace(/USERNAME/g, getCommentAuthor(parentThing))
         .replace(/DELTAS/g, flairCount)
         .replace(/SUBREDDIT/g, subreddit)
       if (query.text.length) query.text += '\n\n'
@@ -679,11 +626,10 @@ const verifyThenAward = async (comment) => {
       const stickiedComment = await findOrMakeStickiedComment(linkID, comment, deltaLogPost)
       await updateDeltaLogWikiLinks(linkID, comment, deltaLogPost, stickiedComment)
     }
-    return true
   } catch (err) {
     console.log(err)
-    return true
   }
+  return true
 }
 
 const checkForDeltas = async () => {
@@ -722,14 +668,7 @@ const checkForDeltas = async () => {
         created_utc,
         created,
       }
-      const removedBodyHTML = (
-          body_html
-            .replace(/blockquote&gt;[^]*\/blockquote&gt;/, '')
-            .replace(/pre&gt;[^]*\/pre&gt;/, '')
-      )
-      if (
-          (!!removedBodyHTML.match(/&amp;#8710;|&#8710;|∆|Δ/) || !!removedBodyHTML.match(/!delta/i))
-      ) await verifyThenAward(comments[index])
+      if (checkCommentForDelta(comments[index])) await verifyThenAward(comments[index])
     })
   } catch (err) {
     console.log('Error!'.red)
@@ -863,11 +802,7 @@ const checkMessagesforDeltas = async () => {
             created_utc,
             created,
           }
-          const dbReply = _.reduce(_.get(replies, 'data.children'), (result, reply) => {
-            if (result) return result
-            else if (_.get(reply, 'data.author') === botUsername) return _.get(reply, 'data')
-            return result
-          }, null)
+          const dbReply = getDeltaBotReply(botUsername, replies)
           if (dbReply) {
             const hiddenParams = parseHiddenParams(dbReply.body)
             if (_.keys(hiddenParams.issues).length === 0) { // check if it was a valid delta
@@ -1040,6 +975,19 @@ const checkMessagesforDeltas = async () => {
 const entry = async () => {
   try {
     await reddit.connect()
+    console.log('Start loading modules!'.bgGreen.cyan)
+    await _.reduce(Modules, async (result, Module, name) => {
+      try {
+        console.log(`Trying to load ${name} module!`.bgCyan)
+        const module = result[name] = new Module(reddit)
+        await module.start()
+      } catch (err) {
+        console.error(`${err.stack}`.bgRed)
+      }
+      console.log(`Done trying to load ${name} module!`.bgCyan)
+      return result
+    }, {})
+    console.log('Finished loading modules!'.bgGreen.cyan)
     if (!lastParsedCommentID) {
       const response = await reddit.query(`/r/${subreddit}/comments.json`, true)
       for (let i = 0; i < 5; ++i) {
@@ -1075,6 +1023,7 @@ const entry = async () => {
     }
     /* eslint-enable import/no-unresolved */
     const deltaBoardsThree = new DeltaBoardsThree({
+      subreddit,
       credentials: deltaBoardsThreeCredentials,
       version: packageJson.version,
       flags,

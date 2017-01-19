@@ -8,7 +8,8 @@ import getWikiContent from './get-wiki-content'
 import { escapeUnderscore } from './utils'
 
 class DeltaBoardsThree {
-  constructor({ credentials, version, flags }) {
+  constructor({ subreddit, credentials, version, flags }) {
+    this.subreddit = subreddit
     this.credentials = credentials // this is used to log into the Reddit API
     this.version = version // this is used to mark the headers of the API calls
     this.flags = flags // can be used to read the `isDebug` flag, used in RedditAPIDriver as well
@@ -193,7 +194,7 @@ class DeltaBoardsThree {
     const stringifiedNewHiddenParams = stringifyObjectToBeHidden(newHiddenParams)
 
     // declare the subreddit
-    const subreddit = this.credentials.subreddit
+    const subreddit = this.subreddit
 
     // get the Date string ready
     const parsedDate = `As of ${now.getMonth() + 1}/${now.getDate()}/` +

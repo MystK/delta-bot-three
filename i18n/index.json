@@ -2,7 +2,7 @@
   "en-us": {
     "awardDelta": "Confirmed: 1 delta awarded to /u/USERNAME ([DELTAS∆](/r/SUBREDDIT/wiki/user/USERNAME)).",
     "noAward": {
-      "littleText": "The length of your comment suggests that you haven't properly explained how /u/PARENTUSERNAME changed your view (comment rule 4).\n\nIn the future, DeltaBot will be able to rescan edited comments. In the mean time, **please post a new comment** with the required explanation so that DeltaBot can see it.",
+      "littleText": "The length of your comment suggests that you haven't properly explained how /u/PARENTUSERNAME changed your view (comment rule 4).\n\nDeltaBot is able to rescan edited comments. Please edit your comment with the required explanation and **make sure the * is shown** so that DeltaBot can see it.",
       "op": "You can't award OP a delta.\n\nAllowing this would wrongly suggest that you can post here with the aim of convincing others.\n\nIf you were explaining when/how to award a delta, please use a reddit quote for the symbol next time.",
       "db3": "You can't award DeltaBot a delta.",
       "self": "You can't award yourself a delta.",
