@@ -17,6 +17,7 @@ import { AllHtmlEntities as entities } from 'html-entities'
 // import bodyParser from 'koa-bodyparser'
 import Reddit from './reddit-api-driver'
 import DeltaBoardsThree from './delta-boards-three'
+import DeltaBoardsYear from './delta-boards-year'
 import parseHiddenParams from './parse-hidden-params'
 import stringifyObjectToBeHidden from './stringify-hidden-params'
 import getWikiContent from './get-wiki-content'
@@ -1029,6 +1030,13 @@ const entry = async () => {
       flags,
     })
     deltaBoardsThree.initialStart()
+    const deltaBoardsYear = new DeltaBoardsYear({
+      subreddit,
+      credentials: deltaBoardsThreeCredentials,
+      version: packageJson.version,
+      flags,
+    })
+    deltaBoardsYear.initialStart()
   } catch (err) {
     console.error(err)
   }
