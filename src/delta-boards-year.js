@@ -8,7 +8,6 @@ import getWikiContent from './get-wiki-content'
 import { escapeUnderscore } from './utils'
 import fs from 'fs'
 import promisify from 'promisify-node'
-import mkdirp from 'mkdirp'
 
 fs.writeFile = promisify(fs.writeFile)
 
@@ -33,185 +32,114 @@ class DeltaBoardsYear {
     await api.connect()
 
     // start the scheduled time job
-    this.startJob()
+    // console.log(await this.getTopTen(2016, 12))
   }
-  async startJob() {
-    // define methods on top of scope of where it will be used
+  async getDeltasTotal(year, month = null) {
+    const { api } = this
+
+    let threadUrls = []
+    const deltas = []
+    let finished = false
 
     // get the date variables ready
-    const now = new Date()
-    const nowYear = now.getFullYear()
+    const startOfPeriod = new Date(year, month - 1)
+    const start = startOfPeriod.getTime() / 1000 - 3600 * 24 * 7
+    let end = new Date(year, month)
 
-    const deltas = []
+    // crawl the specified time period for threads
+    while (!finished) {
+      const threadQuery = {
+        limit: '100',
+        sort: 'new',
+        q: 'timestamp:' + start + '..' + end.getTime()/ 1000,
+        syntax: 'cloudsearch',
+        restrict_sr: 'on'
+      }
 
-    // fetch already existing delta files
-    const path = './config/deltas/' + nowYear + '/'
-    const files = await fs.readdirSync(path)
+      const response = await api.query(`/r/${this.subreddit}/search.json?${stringify(threadQuery)}`, true)
 
-    mkdirp.sync(path)
+      if (response.data.children.length == 0) {
+        finished = true
+      }
 
-    let lastSavedDay = 0
+      for (let child of response.data.children) {
+        threadUrls.push(`/r/${this.subreddit}/comments/` + child.data.id + '.json')
 
-    for (let i = 0; i < files.length; ++i) {
-      const file = files[i]
-      if (!fs.statSync(path + file).isDirectory()) {
-          if (parseInt(file) > lastSavedDay) {
-            lastSavedDay = parseInt(file)
-          }
+        const { created_utc: createdUtc } = child.data
+        const childDate = new Date(createdUtc * 1000)
+        if (childDate < end) {
+          end = childDate
+        }
       }
     }
 
-    const dateFromDay = function(year, day) {
-      let date = new Date(year, 0);
-      return new Date(date.setDate(day));
-    }
-    const dayFromDate = function(date, nowYear) {
-        return Math.floor((date - new Date(nowYear, 0, 0)) / (1000 * 3600 * 24))
-    }
+    // fetch the comments of all threads and analyse if there were deltas given out
+    for (let threadUrl of threadUrls) {
 
-    const currentDayOfYear = dayFromDate(now, nowYear)
+      const response = await api.query(threadUrl, true)
 
-    if (lastSavedDay < currentDayOfYear - 1) {
-      const stopBeforeThisDate = dateFromDay(nowYear, lastSavedDay + 1)
-      const ignoreAfterThisDate = dateFromDay(nowYear, currentDayOfYear)
+      if (!response[1].data.children) {
+        continue
+      }
 
-      // set up variable for while loop
-      let oldestDateParsed = now
-      let after
-      let noMoreComments
-
-      // begin grabbing and parsing comments to be ready to be used
-      while (oldestDateParsed >= stopBeforeThisDate && !noMoreComments) {
-        // make a call to get the comments
-        const commentQuery = {
-            limit: '1000',
-            after,
+      // recursively check comments and replies to them for deltas
+      const checkAllChildren = function(data) {
+        if (!data.children) {
+          return
         }
-        const { api } = this
-        const commentJson = await api.query(
-          `/user/${this.credentials.username}/comments?${stringify(commentQuery)}`
-        )
-        after = _.get(commentJson, 'data.after')
-        if (!after) noMoreComments = true
 
-        // grab the relevant data into a variable
-        const children = _.get(commentJson, 'data.children')
+        for (let child of data.children) {
+          if (child.data.replies) {
+            checkAllChildren(child.data.replies.data)
+          }
+          if (child.data.author === this.credentials.username) {
+            // grab data from the response and put into variables
+            const { body, created_utc: createdUtc } = child.data
 
-        // loop through each comment
-        for (const child of children) {
+            // get the date variables ready
+            const childDate = new Date(createdUtc * 1000) // createdUtc is seconds. Date accepts ms
+            const newHiddenParams = parseHiddenParams(body)
 
-          // this adds a delta to the delta list
-          const addDelta = ({ username, time }) => {
-            const day = dayFromDate(time, nowYear)
-
-            if (deltas[day] === undefined) {
-              deltas[day] = {}
+            if (childDate < startOfPeriod) {
+              continue
             }
 
-            if (deltas[day][username] === undefined) {
-                deltas[day][username] = 0
-            }
-
-            deltas[day][username]++
-          }
-
-          // grab data from the response and put into variables
-          const { body, created_utc: createdUtc } = child.data
-
-          // get the date variables ready
-          const childDate = new Date(createdUtc * 1000) // createdUtc is seconds. Date accepts ms
-          const newHiddenParams = parseHiddenParams(body)
-
-          if (childDate > ignoreAfterThisDate) {
-            continue
-          }
-
-          if (childDate < stopBeforeThisDate) {
-              oldestDateParsed = childDate
-              break;
-          }
-
-
-          // continue only if hidden params
-          if (newHiddenParams) {
+            // continue only if hidden params
+            if (newHiddenParams) {
               const { issues, parentUserName } = newHiddenParams
               const issueCount = Object.keys(issues).length
 
-              // waterfall add deltas to the objects if it is a valid delta
-              if (issueCount === 0) {
-                  addDelta({
-                      username: parentUserName,
-                      time: childDate,
-                  })
+              if (issueCount === 0 && parentUserName !== undefined) {
+                if (deltas[parentUserName] === undefined) {
+                  deltas[parentUserName] = 0
+                }
+
+                deltas[parentUserName]++
               }
+            }
           }
-          // set the oldestDateParsed
-          oldestDateParsed = childDate
         }
       }
+
+      checkAllChildren(response[1].data)
     }
 
-    // now save the collected delta stats to the corresponding file
-    for (let i = lastSavedDay + 1; i < deltas.length; i++) {
-      try {
-        await fs.writeFile(
-          path + i, JSON.stringify(deltas[i])
-        )
-      } catch (e) {
-        console.log(e)
-      }
-    }
-
-    // set the timeout here in case it takes long or hangs,
-    // so it doesn't fire off multiple time at once
-    setTimeout(() => this.startJob(), 3600 * 1000)
+    return deltas
   }
-  getYearTotal(year) {
-    const deltas = []
+  async getTopTen(year, month = null) {
+    let total
+    total = await this.getDeltasTotal(year, month)
 
-    // fetch already existing delta files
-    const path = './config/deltas/' + year + '/'
-    const files = fs.readdirSync(path)
-
-    let fileContents = []
-
-    for (let i = 0; i < files.length; ++i) {
-      const file = files[i]
-      if (!fs.statSync(path + file).isDirectory()) {
-        fileContents.push(JSON.parse(fs.readFileSync(path + file, "utf8")))
-      }
+    let totalList = []
+    for (let user in total) {
+      totalList.push([user, total[user]])
     }
 
-    let totalDeltas = {}
-
-    for (let i in fileContents) {
-      let deltas = fileContents[i]
-      for (let user in deltas) {
-        let amount = deltas[user]
-
-        if (totalDeltas[user] === undefined) {
-          totalDeltas[user] = 0
-        }
-
-        totalDeltas[user] += amount
-      }
-    }
-
-    return totalDeltas
-  }
-  getYearTopTen(year) {
-    let yearTotal = this.getYearTotal(year)
-
-    let yearTotalList = []
-    for (let user in yearTotal) {
-      yearTotalList.push([user, yearTotal[user]])
-    }
-
-    yearTotalList.sort(function (a, b) {
+    totalList.sort(function (a, b) {
       return b[1] - a[1]
     })
 
-    return yearTotalList.slice(0, 10)
+    return totalList.slice(0, 10)
   }
 }
 
