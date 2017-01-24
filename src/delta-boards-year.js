@@ -32,7 +32,45 @@ class DeltaBoardsYear {
     await api.connect()
 
     // start the scheduled time job
-    // console.log(await this.getTopTen(2016, 12))
+    this.updateYearlyDeltaboard()
+  }
+  async updateYearlyDeltaboard() {
+    const now = new Date()
+    const topTenYear = await this.getTopTen(now.getFullYear())
+
+    const { api, subreddit } = this
+    // grab the newHiddenParams from the wiki page
+    const wikiPage = 'deltaboards'
+    const deltaBoardsWikiContent = await getWikiContent({ api, subreddit, wikiPage })
+    const oldHiddenParams = parseHiddenParams(deltaBoardsWikiContent)
+
+    let yearly = []
+
+    for (let user of topTenYear) {
+      yearly.push({username: user[0], deltaCount: user[1], newestDeltaTime: 0})
+    }
+
+    oldHiddenParams.yearly = yearly
+
+    const hiddenSection = deltaBoardsWikiContent.match(/DB3PARAMSSTART[^]+DB3PARAMSEND/)[0].slice(
+      'DB3PARAMSSTART'.length, -'DB3PARAMSEND'.length
+    )
+
+    const newWikiContent = deltaBoardsWikiContent.replace(hiddenSection, stringifyObjectToBeHidden(oldHiddenParams))
+
+    // define update wiki parameters
+    const updateWikiQuery = {
+      page: 'deltaboards',
+      reason: 'updated deltaboards',
+      content: newWikiContent,
+    }
+
+    // updateWikiResponse
+    await api.query(
+      { URL: `/r/${subreddit}/api/wiki/edit`, method: 'POST', body: stringify(updateWikiQuery) }
+    )
+
+    setTimeout(() => this.updateYearlyDeltaboard(), 24 * 3600 * 1000) // run again in 24 hours
   }
   async getDeltasTotal(year, month = null) {
     const { api } = this

@@ -190,9 +190,6 @@ class DeltaBoardsThree {
         .value(),
     }
 
-    // newHiddenParams the data
-    const stringifiedNewHiddenParams = stringifyObjectToBeHidden(newHiddenParams)
-
     // declare the subreddit
     const subreddit = this.subreddit
 
@@ -226,6 +223,13 @@ class DeltaBoardsThree {
       const wikiPage = 'deltaboards'
       const deltaBoardsWikiContent = await getWikiContent({ api, subreddit, wikiPage })
       const oldHiddenParams = parseHiddenParams(deltaBoardsWikiContent)
+
+      // copy the yearly hidden data
+      if (oldHiddenParams.yearly) {
+        newHiddenParams.yearly = oldHiddenParams.yearly
+      } else {
+        newHiddenParams.yearly = []
+      }
 
       // if the monthly data has changed, update the sidebar
       if (!_.isEqual(_.get(oldHiddenParams, 'monthly'), newHiddenParams.monthly)) {
@@ -288,6 +292,9 @@ ${mapDataToTable(newHiddenParams.monthly)}
 
       // if any data has changed, update the wiki
       if (!_.isEqual(oldHiddenParams, newHiddenParams)) {
+        // newHiddenParams the data
+        const stringifiedNewHiddenParams = stringifyObjectToBeHidden(newHiddenParams)
+
         // create the wiki output
         const wikiOutput = `[**&#8656; wiki index**](http://reddit.com/r/${subreddit}/wiki)
 
@@ -312,6 +319,12 @@ ${mapDataToTable(newHiddenParams.weekly)}
 | Rank | Username | Deltas |
 | :------: | :------: | :------: |
 ${mapDataToTable(newHiddenParams.monthly)}
+
+**Yearly**
+
+| Rank | Username | Deltas |
+| :------: | :------: | :------: |
+${mapDataToTable(newHiddenParams.yearly)}
 
 ${parsedDate}${stringifiedNewHiddenParams}
 `
