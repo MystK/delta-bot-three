@@ -1,11 +1,8 @@
-import _ from 'lodash'
 import { stringify } from 'query-string'
-import moment from 'moment'
 import Api from './reddit-api-driver'
 import parseHiddenParams from './parse-hidden-params'
 import stringifyObjectToBeHidden from './stringify-hidden-params'
 import getWikiContent from './get-wiki-content'
-import { escapeUnderscore } from './utils'
 import fs from 'fs'
 import promisify from 'promisify-node'
 
@@ -42,7 +39,7 @@ class DeltaBoardsYear {
     // grab the newHiddenParams from the wiki page
     const wikiPage = 'deltaboards'
     const deltaBoardsWikiContent = await getWikiContent({ api, subreddit, wikiPage })
-    const oldHiddenParams = parseHiddenParams(deltaBoardsWikiContent)
+    const hiddenParams = parseHiddenParams(deltaBoardsWikiContent)
 
     let yearly = []
 
@@ -50,13 +47,13 @@ class DeltaBoardsYear {
       yearly.push({username: user[0], deltaCount: user[1], newestDeltaTime: 0})
     }
 
-    oldHiddenParams.yearly = yearly
+    hiddenParams.yearly = yearly
 
     const hiddenSection = deltaBoardsWikiContent.match(/DB3PARAMSSTART[^]+DB3PARAMSEND/)[0].slice(
       'DB3PARAMSSTART'.length, -'DB3PARAMSEND'.length
     )
 
-    const newWikiContent = deltaBoardsWikiContent.replace(hiddenSection, stringifyObjectToBeHidden(oldHiddenParams))
+    const newWikiContent = deltaBoardsWikiContent.replace(hiddenSection, stringifyObjectToBeHidden(hiddenParams))
 
     // define update wiki parameters
     const updateWikiQuery = {
