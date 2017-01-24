@@ -1,10 +1,10 @@
 import { stringify } from 'query-string'
+import fs from 'fs'
+import promisify from 'promisify-node'
 import Api from './reddit-api-driver'
 import parseHiddenParams from './parse-hidden-params'
 import stringifyObjectToBeHidden from './stringify-hidden-params'
 import getWikiContent from './get-wiki-content'
-import fs from 'fs'
-import promisify from 'promisify-node'
 
 fs.writeFile = promisify(fs.writeFile)
 
@@ -41,10 +41,10 @@ class DeltaBoardsYear {
     const deltaBoardsWikiContent = await getWikiContent({ api, subreddit, wikiPage })
     const hiddenParams = parseHiddenParams(deltaBoardsWikiContent)
 
-    let yearly = []
+    const yearly = []
 
-    for (let user of topTenYear) {
-      yearly.push({username: user[0], deltaCount: user[1], newestDeltaTime: 0})
+    for (const user of topTenYear) {
+      yearly.push({ username: user[0], deltaCount: user[1], newestDeltaTime: 0 })
     }
 
     hiddenParams.yearly = yearly
@@ -53,7 +53,9 @@ class DeltaBoardsYear {
       'DB3PARAMSSTART'.length, -'DB3PARAMSEND'.length
     )
 
-    const newWikiContent = deltaBoardsWikiContent.replace(hiddenSection, stringifyObjectToBeHidden(hiddenParams))
+    const newWikiContent = deltaBoardsWikiContent.replace(
+      hiddenSection, stringifyObjectToBeHidden(hiddenParams)
+    )
 
     // define update wiki parameters
     const updateWikiQuery = {
@@ -72,13 +74,13 @@ class DeltaBoardsYear {
   async getDeltasTotal(year, month = null) {
     const { api } = this
 
-    let threadUrls = []
+    const threadUrls = []
     const deltas = []
     let finished = false
 
     // get the date variables ready
     const startOfPeriod = new Date(year, month - 1)
-    const start = startOfPeriod.getTime() / 1000 - 3600 * 24 * 7
+    const start = (startOfPeriod.getTime() / 1000) - (3600 * 24 * 7)
     let end = new Date(year, month)
 
     // crawl the specified time period for threads
@@ -86,19 +88,22 @@ class DeltaBoardsYear {
       const threadQuery = {
         limit: '100',
         sort: 'new',
-        q: 'timestamp:' + start + '..' + end.getTime()/ 1000,
+        q: `timestamp:${start}..${end.getTime() / 1000}`,
         syntax: 'cloudsearch',
-        restrict_sr: 'on'
+        restrict_sr: 'on',
       }
 
-      const response = await api.query(`/r/${this.subreddit}/search.json?${stringify(threadQuery)}`, true)
+      const response = await api.query(
+        `/r/${this.subreddit}/search.json?${stringify(threadQuery)}`,
+        true
+      )
 
-      if (response.data.children.length == 0) {
+      if (response.data.children.length === 0) {
         finished = true
       }
 
-      for (let child of response.data.children) {
-        threadUrls.push(`/r/${this.subreddit}/comments/` + child.data.id + '.json')
+      for (const child of response.data.children) {
+        threadUrls.push(`/r/${this.subreddit}/comments/${child.data.id}.json`)
 
         const { created_utc: createdUtc } = child.data
         const childDate = new Date(createdUtc * 1000)
@@ -109,70 +114,63 @@ class DeltaBoardsYear {
     }
 
     // fetch the comments of all threads and analyse if there were deltas given out
-    for (let threadUrl of threadUrls) {
-
+    for (const threadUrl of threadUrls) {
       const response = await api.query(threadUrl, true)
 
-      if (!response[1].data.children) {
-        continue
-      }
-
-      // recursively check comments and replies to them for deltas
-      const checkAllChildren = function(data) {
-        if (!data.children) {
-          return
-        }
-
-        for (let child of data.children) {
-          if (child.data.replies) {
-            checkAllChildren(child.data.replies.data)
+      if (response[1].data.children) {
+        // recursively check comments and replies to them for deltas
+        const checkAllChildren = function checkAllChildren(data) {
+          if (!data.children) {
+            return
           }
-          if (child.data.author === this.credentials.username) {
-            // grab data from the response and put into variables
-            const { body, created_utc: createdUtc } = child.data
 
-            // get the date variables ready
-            const childDate = new Date(createdUtc * 1000) // createdUtc is seconds. Date accepts ms
-            const newHiddenParams = parseHiddenParams(body)
-
-            if (childDate < startOfPeriod) {
-              continue
+          for (const child of data.children) {
+            if (child.data.replies) {
+              checkAllChildren(child.data.replies.data)
             }
+            if (child.data.author === this.credentials.username) {
+              // grab data from the response and put into variables
+              const { body, created_utc: createdUtc } = child.data
 
-            // continue only if hidden params
-            if (newHiddenParams) {
-              const { issues, parentUserName } = newHiddenParams
-              const issueCount = Object.keys(issues).length
+              // get the date variables ready
+              const childDate = new Date(createdUtc * 1000) // convert from s to ms
+              const newHiddenParams = parseHiddenParams(body)
 
-              if (issueCount === 0 && parentUserName !== undefined) {
-                if (deltas[parentUserName] === undefined) {
-                  deltas[parentUserName] = 0
+              if (childDate >= startOfPeriod) {
+                // continue only if hidden params
+                if (newHiddenParams) {
+                  const { issues, parentUserName } = newHiddenParams
+                  const issueCount = Object.keys(issues).length
+
+                  if (issueCount === 0 && parentUserName !== undefined) {
+                    if (deltas[parentUserName] === undefined) {
+                      deltas[parentUserName] = 0
+                    }
+
+                    deltas[parentUserName]++
+                  }
                 }
-
-                deltas[parentUserName]++
               }
             }
           }
         }
-      }
 
-      checkAllChildren(response[1].data)
+        checkAllChildren(response[1].data)
+      }
     }
 
     return deltas
   }
   async getTopTen(year, month = null) {
-    let total
-    total = await this.getDeltasTotal(year, month)
+    const total = await this.getDeltasTotal(year, month)
 
-    let totalList = []
-    for (let user in total) {
+    const totalList = []
+    // eslint-disable-next-line
+    for (const user in total) {
       totalList.push([user, total[user]])
     }
 
-    totalList.sort(function (a, b) {
-      return b[1] - a[1]
-    })
+    totalList.sort((a, b) => b[1] - a[1])
 
     return totalList.slice(0, 10)
   }
