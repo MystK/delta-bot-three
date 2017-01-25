@@ -60,7 +60,7 @@ class DeltaBoardsYear {
     // define update wiki parameters
     const updateWikiQuery = {
       page: 'deltaboards',
-      reason: 'updated deltaboards',
+      reason: 'updated yearly deltaboard',
       content: newWikiContent,
     }
 
