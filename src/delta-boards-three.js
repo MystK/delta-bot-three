@@ -38,8 +38,12 @@ class DeltaBoardsThree {
     const nowDayOfTheMonth = now.getDate()
     const nowMonth = now.getMonth()
     const nowYear = now.getFullYear()
-    const dateOfThisMonday = new Date(moment().set({ hour:0, minute:0, second:0, millisecond:0 }).isoWeekday(1).format())
-    const dateOfThisSunday = new Date(moment().set({ hour:23, minute:59, second:59, millisecond:0 }).isoWeekday(7).format())
+    const dateOfThisMonday = new Date(
+      moment().set({ hour: 0, minute: 0, second: 0, millisecond: 0 }).isoWeekday(1).format()
+    )
+    const dateOfThisSunday = new Date(
+      moment().set({ hour: 23, minute: 59, second: 59, millisecond: 0 }).isoWeekday(7).format()
+    )
     const dateOfFirstDayOfThisMonth = new Date(nowYear, nowMonth)
 
     // prep the object for the deltaBoards
