@@ -590,7 +590,7 @@ export const verifyThenAward = async (comment) => {
   } = comment
 
   // check if DeltaBot has already replied to this comment
-  const commentURL = linkURL.replace('https://www.reddit.com', '') + id + '.json'
+  const commentURL = `${linkURL}${id}.json`.replace('https://www.reddit.com', '')
   const response = await reddit.query(commentURL, true)
   const replies = _.get(response, '[1].data.children[0].data.replies')
   const dbReplied = getDeltaBotReply(botUsername, replies)
@@ -941,7 +941,8 @@ const checkMessagesforDeltas = async () => {
                 .replace(/blockquote&gt;[^]*?\/blockquote&gt;/, '')
                 .replace(/pre&gt;[^]*?\/pre&gt;/, '')
           )
-          if (!!removedBodyHTML.match(/&amp;#8710;|&#8710;|∆|Δ/) || !!removedBodyHTML.match(/!delta/i)) {
+          if (!!removedBodyHTML.match(/&amp;#8710;|&#8710;|∆|Δ/) ||
+            !!removedBodyHTML.match(/!delta/i)) {
             await verifyThenAward(comment)
           }
         }
