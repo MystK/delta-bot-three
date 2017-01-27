@@ -906,7 +906,6 @@ const checkMessagesforDeltas = async () => {
           const commentLink = comments.commentLinks[i]
           const response = await reddit.query(`${commentLink}`)
           const {
-            replies,
             link_id,
             author,
             body,
@@ -940,22 +939,14 @@ const checkMessagesforDeltas = async () => {
             created_utc,
             created,
           }
-          const dbReplied = _.reduce(_.get(replies, 'data.children'), (result, reply) => {
-            if (result) return result
-            return _.get(reply, 'data.author') === botUsername
-          }, false)
           const removedBodyHTML = (
               body_html
                 .replace(/blockquote&gt;[^]*?\/blockquote&gt;/, '')
                 .replace(/pre&gt;[^]*?\/pre&gt;/, '')
           )
-          if (
-              !dbReplied &&
-              (
-                  !!removedBodyHTML.match(/&amp;#8710;|&#8710;|∆|Δ/) ||
-                  !!removedBodyHTML.match(/!delta/i)
-              )
-          ) await verifyThenAward(comment)
+          if (!!removedBodyHTML.match(/&amp;#8710;|&#8710;|∆|Δ/) || !!removedBodyHTML.match(/!delta/i)) {
+            await verifyThenAward(comment)
+          }
         }
       } catch (err) {
         console.error(err)
