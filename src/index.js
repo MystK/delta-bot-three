@@ -588,6 +588,20 @@ export const verifyThenAward = async (comment) => {
     link_url: linkURL,
     id,
   } = comment
+
+  // check if DeltaBot has already replied to this comment
+  const commentURL = linkURL.replace('https://www.reddit.com', '') + id + '.json'
+  const response = await reddit.query(commentURL, true)
+  const replies = _.get(response, '[1].data.children[0].data.replies')
+  const dbReplied = _.reduce(_.get(replies, 'data.children'), (result, reply) => {
+    if (result) return result
+    return _.get(reply, 'data.author') === botUsername
+  }, false)
+
+  if (dbReplied) {
+    return false
+  }
+
   try {
     const {
       issueCount,
