@@ -79,9 +79,16 @@ class DeltaBoardsYear {
     let finished = false
 
     // get the date variables ready
-    const startOfPeriod = new Date(year, month - 1)
+    let startOfPeriod
+    let end
+    if (month === null) {
+      startOfPeriod = new Date(year, 0)
+      end = new Date(year + 1, 0)
+    } else {
+      startOfPeriod = new Date(year, month - 1)
+      end = new Date(year, month)
+    }
     const start = (startOfPeriod.getTime() / 1000) - (3600 * 24 * 7)
-    let end = new Date(year, month)
 
     // crawl the specified time period for threads
     while (!finished) {
@@ -113,6 +120,8 @@ class DeltaBoardsYear {
       }
     }
 
+    const { credentials } = this
+
     // fetch the comments of all threads and analyse if there were deltas given out
     for (const threadUrl of threadUrls) {
       const response = await api.query(threadUrl, true)
@@ -128,7 +137,7 @@ class DeltaBoardsYear {
             if (child.data.replies) {
               checkAllChildren(child.data.replies.data)
             }
-            if (child.data.author === this.credentials.username) {
+            if (child.data.author === credentials.username) {
               // grab data from the response and put into variables
               const { body, created_utc: createdUtc } = child.data
 
