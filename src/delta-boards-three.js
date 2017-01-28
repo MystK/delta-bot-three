@@ -5,7 +5,7 @@ import Api from './reddit-api-driver'
 import parseHiddenParams from './parse-hidden-params'
 import stringifyObjectToBeHidden from './stringify-hidden-params'
 import getWikiContent from './get-wiki-content'
-import { escapeUnderscore } from './utils'
+import { escapeUnderscore, getParsedDate } from './utils'
 
 class DeltaBoardsThree {
   constructor({ subreddit, credentials, version, flags }) {
@@ -198,10 +198,7 @@ class DeltaBoardsThree {
     const subreddit = this.subreddit
 
     // get the Date string ready
-    const parsedDate = `As of ${now.getMonth() + 1}/${now.getDate()}/` +
-    `${now.getFullYear().toString().slice(2)} ` +
-    `${_.padStart(now.getHours(), 2, 0)}:${_.padStart(now.getMinutes(), 2, 0)} ` +
-    `${now.toString().match(/\(([A-Za-z\s].*)\)/)[1]}`
+    const parsedDate = getParsedDate()
 
     // check if wiki and sidebar need to be updated
     try {
@@ -233,6 +230,27 @@ class DeltaBoardsThree {
         newHiddenParams.yearly = oldHiddenParams.yearly
       } else {
         newHiddenParams.yearly = []
+      }
+
+      if (!oldHiddenParams.updateTimes) {
+        newHiddenParams.updateTimes = {
+          yearly: parsedDate,
+          monthly: parsedDate,
+          weekly: parsedDate,
+          daily: parsedDate,
+        }
+      } else {
+        newHiddenParams.updateTimes = oldHiddenParams.updateTimes
+      }
+
+      if (!_.isEqual(_.get(oldHiddenParams, 'monthly'), newHiddenParams.monthly)) {
+        newHiddenParams.updateTimes.monthly = parsedDate
+      }
+      if (!_.isEqual(_.get(oldHiddenParams, 'weekly'), newHiddenParams.weekly)) {
+        newHiddenParams.updateTimes.weekly = parsedDate
+      }
+      if (!_.isEqual(_.get(oldHiddenParams, 'daily'), newHiddenParams.daily)) {
+        newHiddenParams.updateTimes.daily = parsedDate
       }
 
       // if the monthly data has changed, update the sidebar
@@ -311,26 +329,30 @@ _____
 | Rank | Username | Deltas |
 | :------: | :------: | :------: |
 ${mapDataToTable(newHiddenParams.daily)}
+| |${newHiddenParams.updateTimes.daily}| |
 
 **Weekly**
 
 | Rank | Username | Deltas |
 | :------: | :------: | :------: |
 ${mapDataToTable(newHiddenParams.weekly)}
+| |${newHiddenParams.updateTimes.weekly}| |
 
 **Monthly**
 
 | Rank | Username | Deltas |
 | :------: | :------: | :------: |
 ${mapDataToTable(newHiddenParams.monthly)}
+| |${newHiddenParams.updateTimes.monthly}| |
 
 **Yearly**
 
 | Rank | Username | Deltas |
 | :------: | :------: | :------: |
 ${mapDataToTable(newHiddenParams.yearly)}
+| |${newHiddenParams.updateTimes.yearly}| |
 
-${parsedDate}${stringifiedNewHiddenParams}
+${stringifiedNewHiddenParams}
 `
 
         // define update wiki parameters

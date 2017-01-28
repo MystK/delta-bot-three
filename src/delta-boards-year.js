@@ -4,6 +4,7 @@ import promisify from 'promisify-node'
 import Api from './reddit-api-driver'
 import parseHiddenParams from './parse-hidden-params'
 import getWikiContent from './get-wiki-content'
+import { getParsedDate } from './utils'
 
 fs.writeFile = promisify(fs.writeFile)
 
@@ -47,6 +48,10 @@ class DeltaBoardsYear {
     }
 
     hiddenParams.yearly = yearly
+
+    if (hiddenParams.updateTimes) {
+      hiddenParams.updateTimes.yearly = getParsedDate()
+    }
 
     const hiddenSection = deltaBoardsWikiContent.match(/DB3PARAMSSTART[^]+DB3PARAMSEND/)[0].slice(
       'DB3PARAMSSTART'.length, -'DB3PARAMSEND'.length

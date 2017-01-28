@@ -138,3 +138,11 @@ export const getDeltaBotReply = (botUsername, replies) => {
     return result
   }, null)
 }
+
+export const getParsedDate = () => {
+  const now = new Date()
+  return `As of ${now.getMonth() + 1}/${now.getDate()}/` +
+    `${now.getFullYear().toString().slice(2)} ` +
+    `${_.padStart(now.getHours(), 2, 0)}:${_.padStart(now.getMinutes(), 2, 0)} ` +
+    `${now.toString().match(/\(([A-Za-z\s].*)\)/)[1]}`
+}
