@@ -3,7 +3,6 @@ import fs from 'fs'
 import promisify from 'promisify-node'
 import Api from './reddit-api-driver'
 import parseHiddenParams from './parse-hidden-params'
-import stringifyObjectToBeHidden from './stringify-hidden-params'
 import getWikiContent from './get-wiki-content'
 
 fs.writeFile = promisify(fs.writeFile)
@@ -54,7 +53,7 @@ class DeltaBoardsYear {
     )
 
     const newWikiContent = deltaBoardsWikiContent.replace(
-      hiddenSection, stringifyObjectToBeHidden(hiddenParams)
+      hiddenSection, JSON.stringify(hiddenParams, null, 2).replace(/\)/g, '-paren---')
     )
 
     // define update wiki parameters
