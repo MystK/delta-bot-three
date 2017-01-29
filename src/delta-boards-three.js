@@ -51,7 +51,6 @@ class DeltaBoardsThree {
       daily: {}, // updates every minute
       weekly: {}, // updates every minute
       monthly: {}, // updates every hour
-      yearly: {}, // updates not yet
     }
 
     // set when to stop getting new comments by date
@@ -107,7 +106,6 @@ class DeltaBoardsThree {
         const childDate = new Date(createdUtc * 1000) // createdUtc is seconds. Date accepts ms
         const childDateDayOfTheMonth = childDate.getDate()
         const childMonth = childDate.getMonth()
-        const childYear = childDate.getFullYear()
         const newHiddenParams = parseHiddenParams(body)
 
         // continue only if hidden params
@@ -146,14 +144,6 @@ class DeltaBoardsThree {
                 const { monthly } = deltaBoards
                 addDelta({
                   board: monthly,
-                  username: parentUserName,
-                  time: createdUtc,
-                })
-              // add to yearly boards object
-              case (nowYear === childYear): // yearly boards
-                const { yearly } = deltaBoards
-                addDelta({
-                  board: yearly,
                   username: parentUserName,
                   time: createdUtc,
                 })
@@ -226,11 +216,7 @@ class DeltaBoardsThree {
       const oldHiddenParams = parseHiddenParams(deltaBoardsWikiContent)
 
       // copy the yearly hidden data
-      if (oldHiddenParams.yearly) {
-        newHiddenParams.yearly = oldHiddenParams.yearly
-      } else {
-        newHiddenParams.yearly = []
-      }
+      newHiddenParams.yearly = oldHiddenParams.yearly
 
       if (!oldHiddenParams.updateTimes) {
         newHiddenParams.updateTimes = {
