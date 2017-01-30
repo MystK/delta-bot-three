@@ -1,5 +1,6 @@
 import { stringify } from 'query-string'
 import fs from 'fs'
+import _ from 'lodash'
 import promisify from 'promisify-node'
 import Api from './reddit-api-driver'
 import parseHiddenParams from './parse-hidden-params'
@@ -47,11 +48,11 @@ class DeltaBoardsYear {
       yearly.push({ username: user[0], deltaCount: user[1], newestDeltaTime: 0 })
     }
 
-    hiddenParams.yearly = yearly
-
-    if (hiddenParams.updateTimes) {
+    if (hiddenParams.updateTimes && !_.isEqual(hiddenParams.yearly, yearly)) {
       hiddenParams.updateTimes.yearly = getParsedDate()
     }
+
+    hiddenParams.yearly = yearly
 
     const hiddenSection = deltaBoardsWikiContent.match(/DB3PARAMSSTART[^]+DB3PARAMSEND/)[0].slice(
       'DB3PARAMSSTART'.length, -'DB3PARAMSEND'.length
