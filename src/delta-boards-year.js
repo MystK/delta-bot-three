@@ -73,7 +73,7 @@ class DeltaBoardsYear {
       { URL: `/r/${subreddit}/api/wiki/edit`, method: 'POST', body: stringify(updateWikiQuery) }
     )
 
-    setTimeout(() => this.updateYearlyDeltaboard(), 24 * 3600 * 1000) // run again in 24 hours
+    setTimeout(() => this.updateYearlyDeltaboard(), 3 * 3600 * 1000) // run again in 24 hours
   }
   async getDeltasTotal(year, month = null) {
     const { api } = this
@@ -92,7 +92,8 @@ class DeltaBoardsYear {
       startOfPeriod = new Date(year, month - 1)
       end = new Date(year, month)
     }
-    const start = (startOfPeriod.getTime() / 1000) - (3600 * 24 * 7)
+    // subtract 6 months, as threads in last 6 months of last year can have deltas from this year
+    const start = (startOfPeriod.getTime() / 1000) - (3600 * 24 * 31 * 6)
 
     // crawl the specified time period for threads
     while (!finished) {
