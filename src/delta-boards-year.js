@@ -74,7 +74,7 @@ class DeltaBoardsYear {
       { URL: `/r/${subreddit}/api/wiki/edit`, method: 'POST', body: stringify(updateWikiQuery) }
     )
 
-    setTimeout(() => this.updateYearlyDeltaboard(), 3 * 3600 * 1000) // run again in 24 hours
+    setTimeout(() => this.updateYearlyDeltaboard(), 3 * 3600 * 1000) // run again in 3 hours
   }
   async getDeltasTotal(year, month = null) {
     const { api } = this
