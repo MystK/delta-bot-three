@@ -310,28 +310,28 @@ _____
 
 # Deltaboards
 
-**Daily**
+## Daily
 
 | Rank | Username | Deltas |
 | :------: | :------: | :------: |
 ${mapDataToTable(newHiddenParams.daily)}
 | |${newHiddenParams.updateTimes.daily}| |
 
-**Weekly**
+## Weekly
 
 | Rank | Username | Deltas |
 | :------: | :------: | :------: |
 ${mapDataToTable(newHiddenParams.weekly)}
 | |${newHiddenParams.updateTimes.weekly}| |
 
-**Monthly**
+## Monthly
 
 | Rank | Username | Deltas |
 | :------: | :------: | :------: |
 ${mapDataToTable(newHiddenParams.monthly)}
 | |${newHiddenParams.updateTimes.monthly}| |
 
-**Yearly**
+## Yearly
 
 | Rank | Username | Deltas |
 | :------: | :------: | :------: |
