@@ -34,10 +34,11 @@ class DeltaBoards {
     this.updateDailyWeeklyMonthlyDeltaboards()
     this.updateYearlyDeltaboard()
   }
+
   async updateDailyWeeklyMonthlyDeltaboards() {
     const { api, subreddit } = this
     // define methods on top of scope of where it will be used
-    const deltaBoards = await this.getNewDeltaboards();
+    const deltaBoards = await this.getNewDeltaboards()
 
     // parse the data to be .map friendly
     const newHiddenParams = {
@@ -94,14 +95,14 @@ class DeltaBoards {
 
       // if the monthly data has changed, update the sidebar
       if (!_.isEqual(_.get(oldHiddenParams, 'monthly'), newHiddenParams.monthly)) {
-        await this.saveSidebarDeltaboard(newHiddenParams, parsedDate);
+        await this.saveSidebarDeltaboard(newHiddenParams, parsedDate)
       } else {
         console.log('Monthly Deltaboard data hasn\'t changed. Won\'t update the sidebar')
       }
 
       // if any data has changed, update the wiki
       if (!_.isEqual(oldHiddenParams, newHiddenParams)) {
-        await this.saveDailyWeeklyMonthlyDeltaboards(newHiddenParams);
+        await this.saveDailyWeeklyMonthlyDeltaboards(newHiddenParams)
       } else {
         console.log('No Deltaboard data has changed. Won\'t update the wiki')
       }
@@ -118,7 +119,7 @@ class DeltaBoards {
     const { subreddit } = this
     return _(data)
       .map((line, index) => {
-        const {deltaCount, username} = line
+        const { deltaCount, username } = line
         const rank = index + 1
         return (
           `| ${rank} | ${
@@ -184,7 +185,7 @@ ${stringifiedNewHiddenParams}
 
     // updateWikiResponse
     await api.query(
-      {URL: `/r/${subreddit}/api/wiki/edit`, method: 'POST', body: stringify(updateWikiQuery)}
+      { URL: `/r/${subreddit}/api/wiki/edit`, method: 'POST', body: stringify(updateWikiQuery) }
     )
   }
 
@@ -235,7 +236,7 @@ ${this.mapDeltaboardDataToTable(newHiddenParams.monthly)}
     const currentAboutData = _.get(getAboutResponse, 'data')
 
     // start params
-    const updateSideBarQuery = _.assign({allow_top: true}, currentAboutData, {
+    const updateSideBarQuery = _.assign({ allow_top: true }, currentAboutData, {
       description: newSideBarText,
       sr: currentAboutData.subreddit_id,
       type: currentAboutData.subreddit_type,
@@ -244,7 +245,7 @@ ${this.mapDeltaboardDataToTable(newHiddenParams.monthly)}
 
     // updateSideBar
     await api.query(
-      {URL: '/api/site_admin', method: 'POST', body: stringify(updateSideBarQuery)}
+      { URL: '/api/site_admin', method: 'POST', body: stringify(updateSideBarQuery) }
     )
   }
 
@@ -255,10 +256,10 @@ ${this.mapDeltaboardDataToTable(newHiddenParams.monthly)}
     const nowMonth = now.getMonth()
     const nowYear = now.getFullYear()
     const dateOfThisMonday = new Date(
-      moment().set({hour: 0, minute: 0, second: 0, millisecond: 0}).isoWeekday(1).format()
+      moment().set({ hour: 0, minute: 0, second: 0, millisecond: 0 }).isoWeekday(1).format()
     )
     const dateOfThisSunday = new Date(
-      moment().set({hour: 23, minute: 59, second: 59, millisecond: 0}).isoWeekday(7).format()
+      moment().set({ hour: 23, minute: 59, second: 59, millisecond: 0 }).isoWeekday(7).format()
     )
     const dateOfFirstDayOfThisMonth = new Date(nowYear, nowMonth)
 
@@ -286,7 +287,7 @@ ${this.mapDeltaboardDataToTable(newHiddenParams.monthly)}
         limit: '1000',
         after,
       }
-      const {api} = this
+      const { api } = this
       const commentJson = await api.query(
         `/user/${this.credentials.username}/comments?${stringify(commentQuery)}`
       )
@@ -301,7 +302,7 @@ ${this.mapDeltaboardDataToTable(newHiddenParams.monthly)}
         // define methods on top of scope of where it will be used
 
         // this adds a delta to the deltaBoards. This mutates the board object
-        const addDelta = ({board, username, time}) => {
+        const addDelta = ({ board, username, time }) => {
           // if the username is there already, up the deltacount
           if (username in board) ++board[username].deltaCount
           // if it is not there, create the base
@@ -316,7 +317,7 @@ ${this.mapDeltaboardDataToTable(newHiddenParams.monthly)}
         }
 
         // grab data from the response and put into variables
-        const {body, created_utc: createdUtc} = child.data
+        const { body, created_utc: createdUtc } = child.data
 
         // get the date variables ready
         const childDate = new Date(createdUtc * 1000) // createdUtc is seconds. Date accepts ms
@@ -326,7 +327,7 @@ ${this.mapDeltaboardDataToTable(newHiddenParams.monthly)}
 
         // continue only if hidden params
         if (newHiddenParams) {
-          const {issues, parentUserName} = newHiddenParams
+          const { issues, parentUserName } = newHiddenParams
           const issueCount = Object.keys(issues).length
 
           // waterfall add deltas to the objects if it is a valid delta
@@ -338,7 +339,7 @@ ${this.mapDeltaboardDataToTable(newHiddenParams.monthly)}
               dateOfThisMonday <= childDate &&
               dateOfThisSunday >= childDate
             ) { // weekly boards
-              const {weekly} = deltaBoards
+              const { weekly } = deltaBoards
               addDelta({
                 board: weekly,
                 username: parentUserName,
@@ -349,7 +350,7 @@ ${this.mapDeltaboardDataToTable(newHiddenParams.monthly)}
             switch (true) {
               // add to daily boards object
               case (nowDayOfTheMonth === childDateDayOfTheMonth): // daily boards
-                const {daily} = deltaBoards
+                const { daily } = deltaBoards
                 addDelta({
                   board: daily,
                   username: parentUserName,
@@ -357,7 +358,7 @@ ${this.mapDeltaboardDataToTable(newHiddenParams.monthly)}
                 })
               // add to monthly boards object
               case (nowMonth === childMonth): // monthly boards
-                const {monthly} = deltaBoards
+                const { monthly } = deltaBoards
                 addDelta({
                   board: monthly,
                   username: parentUserName,
@@ -479,14 +480,15 @@ ${this.mapDeltaboardDataToTable(newHiddenParams.monthly)}
     return deltas
   }
 
-  async getPeriodThreadUrls(startOfPeriod, endOfPeriod) {
+  async getPeriodThreadUrls(start, end) {
     const { api } = this
 
     const threadUrls = []
     let finished = false
 
     // subtract 6 months, as threads in last 6 months of last year can have deltas from this year
-    const startTimestamp = (startOfPeriod.getTime() / 1000) - (3600 * 24 * 31 * 6)
+    const startTimestamp = (start.getTime() / 1000) - (3600 * 24 * 31 * 6)
+    let endOfPeriod = end
 
     // crawl the specified time period for threads
     while (!finished) {

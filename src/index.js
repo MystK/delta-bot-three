@@ -1004,8 +1004,8 @@ const entry = async () => {
       )
       lastParsedCommentID = lastParsedCommentIDs[0]
     }
-    // checkForDeltas()
-    // checkMessagesforDeltas()
+    checkForDeltas()
+    checkMessagesforDeltas()
   } catch (err) {
     console.error(err)
   }
