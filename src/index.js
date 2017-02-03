@@ -16,8 +16,7 @@ import path from 'path'
 import { AllHtmlEntities as entities } from 'html-entities'
 // import bodyParser from 'koa-bodyparser'
 import Reddit from './reddit-api-driver'
-import DeltaBoardsThree from './delta-boards-three'
-import DeltaBoardsYear from './delta-boards-year'
+import DeltaBoards from './delta-boards'
 import Modules from './modules'
 import {
   checkCommentForDelta,
@@ -1005,22 +1004,22 @@ const entry = async () => {
       )
       lastParsedCommentID = lastParsedCommentIDs[0]
     }
-    checkForDeltas()
-    checkMessagesforDeltas()
+    // checkForDeltas()
+    // checkMessagesforDeltas()
   } catch (err) {
     console.error(err)
   }
   try {
-    let deltaBoardsThreeCredentials
+    let deltaBoardsCredentials
     /* eslint-disable import/no-unresolved */
     try {
-      deltaBoardsThreeCredentials = require(
-        path.resolve('./config/credentials/delta-boards-three-credentials.json')
+      deltaBoardsCredentials = require(
+        path.resolve('./config/credentials/delta-boards-credentials.json')
       )
     } catch (err) {
-      console.log('Missing credentials for delta-boards-three! Using base creds as fallback!'.red)
+      console.log('Missing credentials for delta-boards! Using base creds as fallback!'.red)
       try {
-        deltaBoardsThreeCredentials = require(path.resolve('./config/credentials/credentials.json'))
+        deltaBoardsCredentials = require(path.resolve('./config/credentials/credentials.json'))
       } catch (secondErr) {
         console.log(
           'Please contact the author for credentials or create your own credentials json!'.red
@@ -1029,20 +1028,13 @@ const entry = async () => {
       }
     }
     /* eslint-enable import/no-unresolved */
-    const deltaBoardsThree = new DeltaBoardsThree({
+    const deltaBoards = new DeltaBoards({
       subreddit,
-      credentials: deltaBoardsThreeCredentials,
+      credentials: deltaBoardsCredentials,
       version: packageJson.version,
       flags,
     })
-    deltaBoardsThree.initialStart()
-    const deltaBoardsYear = new DeltaBoardsYear({
-      subreddit,
-      credentials: deltaBoardsThreeCredentials,
-      version: packageJson.version,
-      flags,
-    })
-    deltaBoardsYear.initialStart()
+    deltaBoards.initialStart()
   } catch (err) {
     console.error(err)
   }
