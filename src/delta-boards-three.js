@@ -2,10 +2,13 @@ import _ from 'lodash'
 import { stringify } from 'query-string'
 import moment from 'moment'
 import Api from './reddit-api-driver'
-import parseHiddenParams from './parse-hidden-params'
-import stringifyObjectToBeHidden from './stringify-hidden-params'
-import getWikiContent from './get-wiki-content'
-import { escapeUnderscore, getParsedDate } from './utils'
+import {
+  escapeUnderscore,
+  getParsedDate,
+  getWikiContent,
+  parseHiddenParams,
+  stringifyObjectToBeHidden,
+} from './utils'
 
 class DeltaBoardsThree {
   constructor({ subreddit, credentials, version, flags }) {

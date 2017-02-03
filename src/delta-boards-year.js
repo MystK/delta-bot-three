@@ -2,9 +2,11 @@ import { stringify } from 'query-string'
 import fs from 'fs'
 import promisify from 'promisify-node'
 import Api from './reddit-api-driver'
-import parseHiddenParams from './parse-hidden-params'
-import getWikiContent from './get-wiki-content'
-import { getParsedDate } from './utils'
+import {
+  getParsedDate,
+  getWikiContent,
+  parseHiddenParams,
+} from './utils'
 
 fs.writeFile = promisify(fs.writeFile)
 

@@ -18,15 +18,15 @@ import { AllHtmlEntities as entities } from 'html-entities'
 import Reddit from './reddit-api-driver'
 import DeltaBoardsThree from './delta-boards-three'
 import DeltaBoardsYear from './delta-boards-year'
-import parseHiddenParams from './parse-hidden-params'
-import stringifyObjectToBeHidden from './stringify-hidden-params'
-import getWikiContent from './get-wiki-content'
 import Modules from './modules'
 import {
   checkCommentForDelta,
   generateDeltaBotCommentFromDeltaComment,
   getDeltaBotReply,
   getCommentAuthor,
+  getWikiContent,
+  parseHiddenParams,
+  stringifyObjectToBeHidden,
 } from './utils'
 import upgradeConfig from './upgrade-config'
 

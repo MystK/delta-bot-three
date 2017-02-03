@@ -1,6 +1,9 @@
 import path from 'path'
 import _ from 'lodash'
 
+import { AllHtmlEntities as entities } from 'html-entities'
+
+
 export const escapeUnderscore = string => string.replace(/_/g, '\\_')
 
 export const getCommentAuthor = comment => _.get(comment, 'author.name') || _.get(comment, 'author')
@@ -146,3 +149,34 @@ export const getParsedDate = () => {
     `${_.padStart(now.getHours(), 2, 0)}:${_.padStart(now.getMinutes(), 2, 0)} ` +
     `${now.toString().match(/\(([A-Za-z\s].*)\)/)[1]}`
 }
+
+export const getWikiContent = async ({ api, subreddit, wikiPage }) => {
+  try {
+    const resp = await api.query(`/r/${subreddit}/wiki/${wikiPage}`, true, true)
+    const html = resp.match(
+      /<textarea readonly class="source" rows="20" cols="20">[^]+<\/textarea>/
+    )[0].replace(/<textarea readonly class="source" rows="20" cols="20">|<\/textarea>/g, '')
+    return entities.decode(html)
+  } catch (err) {
+    return false
+  }
+}
+
+export const parseHiddenParams = string => {
+  try {
+    const hiddenSection = string.match(/DB3PARAMSSTART[^]+DB3PARAMSEND/)[0]
+    const stringParams = hiddenSection.slice(
+      'DB3PARAMSSTART'.length, -'DB3PARAMSEND'.length
+    ).replace(/&quot;/g, '"').replace(/-paren---/g, ')')
+    return JSON.parse(entities.decode(stringParams))
+  } catch (error) {
+    return false
+  }
+}
+
+export const stringifyObjectToBeHidden = input => (
+  /* eslint-disable no-irregular-whitespace */
+  `[​](HTTP://DB3PARAMSSTART\n${
+    JSON.stringify(input, null, 2).replace(/\)/g, '-paren---')
+  }\nDB3PARAMSEND)`
+)
