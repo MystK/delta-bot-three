@@ -4,10 +4,10 @@ import {
   checkCommentForDelta,
   generateDeltaBotCommentFromDeltaComment,
   getDeltaBotReply,
+  parseHiddenParams,
 } from './../utils'
 import { verifyThenAward } from './../index'
 import DeltaBotModule from './delta-bot-module'
-import parseHiddenParams from './../parse-hidden-params'
 
 class CheckEditedComments extends DeltaBotModule {
   constructor(legacyRedditApi) {

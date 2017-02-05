@@ -36,8 +36,9 @@ The third rewrite of delta bot, created for [reddit.com/r/changemyview](https://
 ### A special thanks to everyone who contributed
 _Please add yourself to this list if you've contributed:_
 * [MystK](https://github.com/mystk)
-* [roastchicken](https://github.com/roastchicken)
 * [wyantb](https://github.com/wyantb)
+* [RaoulMeyer](https://github.com/RaoulMeyer)
+* [roastchicken](https://github.com/roastchicken)
 * [stedop](https://github.com/stedop)
 * [beasta](https://github.com/beasta)
 
@@ -50,7 +51,7 @@ _Please add yourself to this list if you've contributed:_
 - [ ] Act on edits made within 3 minutes of commenting [#139](https://github.com/MystK/delta-bot-three/issues/139).
 - [ ] Solve the missing deltas issue [#119](https://github.com/MystK/delta-bot-three/issues/119).
 - [x] Implement first-time-delta PMs [#14](https://github.com/MystK/delta-bot-three/issues/14).
-- [ ] Yearly Deltaboard [#36](https://github.com/MystK/delta-bot-three/issues/36).
+- [x] Yearly Deltaboard [#36](https://github.com/MystK/delta-bot-three/issues/36).
 - [ ] All-Time Deltaboard [#34](https://github.com/MystK/delta-bot-three/issues/34).
 - [x] /r/DeltaLog [#17](https://github.com/MystK/delta-bot-three/issues/17).
 - [x] DeltaBot's Stickied Comment [#89](https://github.com/MystK/delta-bot-three/issues/89).

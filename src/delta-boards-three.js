@@ -2,10 +2,13 @@ import _ from 'lodash'
 import { stringify } from 'query-string'
 import moment from 'moment'
 import Api from './reddit-api-driver'
-import parseHiddenParams from './parse-hidden-params'
-import stringifyObjectToBeHidden from './stringify-hidden-params'
-import getWikiContent from './get-wiki-content'
-import { escapeUnderscore } from './utils'
+import {
+  escapeUnderscore,
+  getParsedDate,
+  getWikiContent,
+  parseHiddenParams,
+  stringifyObjectToBeHidden,
+} from './utils'
 
 class DeltaBoardsThree {
   constructor({ subreddit, credentials, version, flags }) {
@@ -38,8 +41,12 @@ class DeltaBoardsThree {
     const nowDayOfTheMonth = now.getDate()
     const nowMonth = now.getMonth()
     const nowYear = now.getFullYear()
-    const dateOfThisMonday = new Date(moment().isoWeekday(1).format())
-    const dateOfThisSunday = new Date(moment().isoWeekday(7).format())
+    const dateOfThisMonday = new Date(
+      moment().set({ hour: 0, minute: 0, second: 0, millisecond: 0 }).isoWeekday(1).format()
+    )
+    const dateOfThisSunday = new Date(
+      moment().set({ hour: 23, minute: 59, second: 59, millisecond: 0 }).isoWeekday(7).format()
+    )
     const dateOfFirstDayOfThisMonth = new Date(nowYear, nowMonth)
 
     // prep the object for the deltaBoards
@@ -47,7 +54,6 @@ class DeltaBoardsThree {
       daily: {}, // updates every minute
       weekly: {}, // updates every minute
       monthly: {}, // updates every hour
-      yearly: {}, // updates not yet
     }
 
     // set when to stop getting new comments by date
@@ -103,7 +109,6 @@ class DeltaBoardsThree {
         const childDate = new Date(createdUtc * 1000) // createdUtc is seconds. Date accepts ms
         const childDateDayOfTheMonth = childDate.getDate()
         const childMonth = childDate.getMonth()
-        const childYear = childDate.getFullYear()
         const newHiddenParams = parseHiddenParams(body)
 
         // continue only if hidden params
@@ -145,14 +150,6 @@ class DeltaBoardsThree {
                   username: parentUserName,
                   time: createdUtc,
                 })
-              // add to yearly boards object
-              case (nowYear === childYear): // yearly boards
-                const { yearly } = deltaBoards
-                addDelta({
-                  board: yearly,
-                  username: parentUserName,
-                  time: createdUtc,
-                })
                 break
               default:
                 break
@@ -190,17 +187,11 @@ class DeltaBoardsThree {
         .value(),
     }
 
-    // newHiddenParams the data
-    const stringifiedNewHiddenParams = stringifyObjectToBeHidden(newHiddenParams)
-
     // declare the subreddit
     const subreddit = this.subreddit
 
     // get the Date string ready
-    const parsedDate = `As of ${now.getMonth() + 1}/${now.getDate()}/` +
-    `${now.getFullYear().toString().slice(2)} ` +
-    `${_.padStart(now.getHours(), 2, 0)}:${_.padStart(now.getMinutes(), 2, 0)} ` +
-    `${now.toString().match(/\(([A-Za-z\s].*)\)/)[1]}`
+    const parsedDate = getParsedDate()
 
     // check if wiki and sidebar need to be updated
     try {
@@ -226,6 +217,30 @@ class DeltaBoardsThree {
       const wikiPage = 'deltaboards'
       const deltaBoardsWikiContent = await getWikiContent({ api, subreddit, wikiPage })
       const oldHiddenParams = parseHiddenParams(deltaBoardsWikiContent)
+
+      // copy the yearly hidden data
+      newHiddenParams.yearly = oldHiddenParams.yearly
+
+      if (!oldHiddenParams.updateTimes) {
+        newHiddenParams.updateTimes = {
+          yearly: parsedDate,
+          monthly: parsedDate,
+          weekly: parsedDate,
+          daily: parsedDate,
+        }
+      } else {
+        newHiddenParams.updateTimes = oldHiddenParams.updateTimes
+      }
+
+      if (!_.isEqual(_.get(oldHiddenParams, 'monthly'), newHiddenParams.monthly)) {
+        newHiddenParams.updateTimes.monthly = parsedDate
+      }
+      if (!_.isEqual(_.get(oldHiddenParams, 'weekly'), newHiddenParams.weekly)) {
+        newHiddenParams.updateTimes.weekly = parsedDate
+      }
+      if (!_.isEqual(_.get(oldHiddenParams, 'daily'), newHiddenParams.daily)) {
+        newHiddenParams.updateTimes.daily = parsedDate
+      }
 
       // if the monthly data has changed, update the sidebar
       if (!_.isEqual(_.get(oldHiddenParams, 'monthly'), newHiddenParams.monthly)) {
@@ -288,6 +303,9 @@ ${mapDataToTable(newHiddenParams.monthly)}
 
       // if any data has changed, update the wiki
       if (!_.isEqual(oldHiddenParams, newHiddenParams)) {
+        // newHiddenParams the data
+        const stringifiedNewHiddenParams = stringifyObjectToBeHidden(newHiddenParams)
+
         // create the wiki output
         const wikiOutput = `[**&#8656; wiki index**](http://reddit.com/r/${subreddit}/wiki)
 
@@ -295,25 +313,35 @@ _____
 
 # Deltaboards
 
-**Daily**
+## Daily
 
 | Rank | Username | Deltas |
 | :------: | :------: | :------: |
 ${mapDataToTable(newHiddenParams.daily)}
+| |${newHiddenParams.updateTimes.daily}| |
 
-**Weekly**
+## Weekly
 
 | Rank | Username | Deltas |
 | :------: | :------: | :------: |
 ${mapDataToTable(newHiddenParams.weekly)}
+| |${newHiddenParams.updateTimes.weekly}| |
 
-**Monthly**
+## Monthly
 
 | Rank | Username | Deltas |
 | :------: | :------: | :------: |
 ${mapDataToTable(newHiddenParams.monthly)}
+| |${newHiddenParams.updateTimes.monthly}| |
 
-${parsedDate}${stringifiedNewHiddenParams}
+## Yearly
+
+| Rank | Username | Deltas |
+| :------: | :------: | :------: |
+${mapDataToTable(newHiddenParams.yearly)}
+| |${newHiddenParams.updateTimes.yearly}| |
+
+${stringifiedNewHiddenParams}
 `
 
         // define update wiki parameters

@@ -17,15 +17,16 @@ import { AllHtmlEntities as entities } from 'html-entities'
 // import bodyParser from 'koa-bodyparser'
 import Reddit from './reddit-api-driver'
 import DeltaBoardsThree from './delta-boards-three'
-import parseHiddenParams from './parse-hidden-params'
-import stringifyObjectToBeHidden from './stringify-hidden-params'
-import getWikiContent from './get-wiki-content'
+import DeltaBoardsYear from './delta-boards-year'
 import Modules from './modules'
 import {
   checkCommentForDelta,
   generateDeltaBotCommentFromDeltaComment,
   getDeltaBotReply,
   getCommentAuthor,
+  getWikiContent,
+  parseHiddenParams,
+  stringifyObjectToBeHidden,
 } from './utils'
 import upgradeConfig from './upgrade-config'
 
@@ -394,7 +395,7 @@ const truncateAwardedText = (text) => {
 const formatAwardedText = (text) => {
   /* eslint-disable no-useless-escape */
   const textWithoutQuotes = entities.decode(text) // html decode the text
-    .replace(/>[^]*?\n\n/g, '**[Quote]** ') // replace quotes
+    .replace(/>[^]*?\n\n/g, '[Quote] ') // replace quotes
     .replace(/\n+/g, ' ') // one or more newlines -> just one space
     .replace(/\[(.+)\]\(.+\)/g, '$1') // links like `[foo](URL)` -> just `foo` in log line
   /* eslint-enable no-useless-escape */
@@ -588,6 +589,20 @@ export const verifyThenAward = async (comment) => {
     link_url: linkURL,
     id,
   } = comment
+
+  // check if DeltaBot has already replied to this comment
+  const commentURL = `${linkURL}${id}.json`.replace('https://www.reddit.com', '')
+  const response = await reddit.query(commentURL, true)
+  const replies = _.get(response, '[1].data.children[0].data.replies')
+  const dbReplied = _.reduce(_.get(replies, 'data.children'), (result, reply) => {
+    if (result) return result
+    return _.get(reply, 'data.author') === botUsername
+  }, false)
+
+  if (dbReplied) {
+    return false
+  }
+
   try {
     const {
       issueCount,
@@ -892,7 +907,6 @@ const checkMessagesforDeltas = async () => {
           const commentLink = comments.commentLinks[i]
           const response = await reddit.query(`${commentLink}`)
           const {
-            replies,
             link_id,
             author,
             body,
@@ -926,22 +940,15 @@ const checkMessagesforDeltas = async () => {
             created_utc,
             created,
           }
-          const dbReplied = _.reduce(_.get(replies, 'data.children'), (result, reply) => {
-            if (result) return result
-            return _.get(reply, 'data.author') === botUsername
-          }, false)
           const removedBodyHTML = (
               body_html
                 .replace(/blockquote&gt;[^]*?\/blockquote&gt;/, '')
                 .replace(/pre&gt;[^]*?\/pre&gt;/, '')
           )
-          if (
-              !dbReplied &&
-              (
-                  !!removedBodyHTML.match(/&amp;#8710;|&#8710;|∆|Δ/) ||
-                  !!removedBodyHTML.match(/!delta/i)
-              )
-          ) await verifyThenAward(comment)
+          if (!!removedBodyHTML.match(/&amp;#8710;|&#8710;|∆|Δ/) ||
+            !!removedBodyHTML.match(/!delta/i)) {
+            await verifyThenAward(comment)
+          }
         }
       } catch (err) {
         console.error(err)
@@ -1029,6 +1036,13 @@ const entry = async () => {
       flags,
     })
     deltaBoardsThree.initialStart()
+    const deltaBoardsYear = new DeltaBoardsYear({
+      subreddit,
+      credentials: deltaBoardsThreeCredentials,
+      version: packageJson.version,
+      flags,
+    })
+    deltaBoardsYear.initialStart()
   } catch (err) {
     console.error(err)
   }
