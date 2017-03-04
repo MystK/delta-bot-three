@@ -41,6 +41,7 @@ _Please add yourself to this list if you've contributed:_
 * [roastchicken](https://github.com/roastchicken)
 * [stedop](https://github.com/stedop)
 * [beasta](https://github.com/beasta)
+* [arswaw](https://github.com/arswaw)
 
 ## Roadmap
 ### The first three months ✓
