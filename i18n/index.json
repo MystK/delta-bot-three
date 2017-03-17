@@ -16,8 +16,8 @@
     "deltaLogTitle": "Deltas awarded in \"<%= title %>\"",
     "deltaLogContent": "Below is a list of the deltas awarded in [this post](<%= linkToPost %>).\n\nPlease note that a change of view [is not necessarily a reversal](https://www.reddit.com/r/changemyview/wiki/index#wiki_what_is_a_.27view.27.3F), and that OP awarding a delta doesn't mean the conversation has ended.\n\nFor a full explanation of the delta system, [see here](https://www.reddit.com/r/changemyview/wiki/deltasystem).\n\n-----\n\n# Deltas from OP /u/<%= opUsername %>\n\n[](HTTP://DB3-FROMOP)\n\n#Deltas from Other Users\n\n[](HTTP://DB3-FROMOTHER)",
     "deltaLogSticky": "/u/<%= username %> (OP) has awarded at least one delta in this post.\n\nAll comments that earned deltas (from OP or other users) are listed [**here**](<%= linkToPost %>), in /r/<%= deltaLogSubreddit %>.\n\nPlease note that a change of view [doesn't necessarily mean a reversal](https://www.reddit.com/r/changemyview/wiki/index#wiki_what_is_a_.27view.27.3F), or that the conversation has ended.\n\n^[Delta System Explained](https://www.reddit.com/r/changemyview/wiki/deltasystem) ^| ^[Deltaboards](https://www.reddit.com/r/changemyview/wiki/deltaboards)",
-    "deltaLogOPEntry": "* 1 delta from OP to /u/<%= awardedUsername %> for \"[<%= awardedText %>](<%= awardedLink %>)\"",
-    "deltaLogOtherEntry": "* 1 delta from /u/<%= awardingUsername %> to /u/<%= awardedUsername %> for \"[<%= awardedText %>](<%= awardedLink %>)\"",
+    "deltaLogOPEntry": "* 1 delta from OP to /u/<%= awardedUsername %> for \"[<%= awardedText %>](<%= awardedLink %>)\"\n",
+    "deltaLogOtherEntry": "* 1 delta from /u/<%= awardingUsername %> to /u/<%= awardedUsername %> for \"[<%= awardedText %>](<%= awardedLink %>)\"\n",
     "deltaLogNoneYet": "* None yet."
   }
 }
