@@ -389,7 +389,34 @@ const wasDeltaMadeByAuthor = comment => comment.link_author === getCommentAuthor
 /* Invoked after the DeltaLog post is made, so `deltaLogKnownPosts` will be populated */
 const deltaLogStickyTemplate = _.template(i18n[locale].deltaLogSticky)
 const findOrMakeStickiedComment = async (linkID, comment, deltaLogPost) => {
-  if (deltaLogPost.stickiedCommentID) {
+  const stickyID = deltaLogPost.wikientry.stickiedCommentID
+  const opName = deltaLogPost.postentry.opUsername
+  const deltasAwardedByOP = deltaLogPost.postentry.comments.filter(
+    comm => comm.awardingUsername === opName
+  ).length
+  const awardStr = deltasAwardedByOP + ((deltasAwardedByOP === 1) ? ' delta' : ' deltas')
+
+  if (stickyID) {
+    // Update the N in 'OP has awarded N deltas...'
+    const stickyCommentBody = deltaLogStickyTemplate({
+      username: opName,
+      linkToPost: `/r/${deltaLogSubreddit}/comments/${deltaLogPost.wikientry.deltaLogPostID}`,
+      deltaLogSubreddit,
+      opawarded: awardStr,
+    })
+
+    const updateParams = {
+      text: stickyCommentBody,
+      thing_id: stickyID,
+    }
+
+    const updateResponse = await reddit.query({
+      URL: `/api/editusertext?${stringify({ thing_id: stickyID })}`,
+      method: 'POST',
+      body: stringify(updateParams),
+    })
+    if (updateResponse.error) { console.error(updateResponse.error) }
+
     return true
   }
   if (!wasDeltaMadeByAuthor(comment)) {
@@ -401,12 +428,13 @@ const findOrMakeStickiedComment = async (linkID, comment, deltaLogPost) => {
       thing_id: linkID,
       text: deltaLogStickyTemplate({
         username: getCommentAuthor(comment),
-        linkToPost: `/r/${deltaLogSubreddit}/comments/${deltaLogPost.deltaLogPostID}`,
+        linkToPost: `/r/${deltaLogSubreddit}/comments/${deltaLogPost.wikientry.deltaLogPostID}`,
         deltaLogSubreddit,
+        opawarded: awardStr,
       }),
     },
   })
-  deltaLogPost.stickiedCommentID = stickiedCommentID
+  deltaLogPost.wikientry.stickiedCommentID = stickiedCommentID
   return true
 }
 
@@ -496,7 +524,7 @@ const addDeltaToLog = async (linkID, comment, parentThing, existingPost) => {
   const deltaLogCreationParams = parseHiddenParams(postText)
   deltaLogCreationParams.comments.push(mapDeltaLogCommentEntry(comment, parentThing))
   await updateDeltaLogPostFromHiddenParams(deltaLogCreationParams, existingPost.deltaLogPostID)
-  return true
+  return deltaLogCreationParams
 }
 
 const findDeltaLogPost = async (linkID) => {
@@ -513,8 +541,8 @@ const findOrMakeDeltaLogPost = async (linkID, comment, parentThing) => {
   const possiblyExistingPost = await findDeltaLogPost(linkID)
   // if the log post already exists, all we'll need to do is update
   if (possiblyExistingPost != null) {
-    await addDeltaToLog(linkID, comment, parentThing, possiblyExistingPost)
-    return possiblyExistingPost
+    const postContents = await addDeltaToLog(linkID, comment, parentThing, possiblyExistingPost)
+    return { wikientry: possiblyExistingPost, postentry: postContents }
   }
   // otherwise, create it & add the delta details to appropriate section
   const deltaLogSubject = deltaLogSubjectTemplate(
@@ -546,7 +574,7 @@ const findOrMakeDeltaLogPost = async (linkID, comment, parentThing) => {
   }
   deltaLogKnownPosts.push(wikiPostObject)
   await distinguishThing({ id: `t3_${postDetails.data.id}`, how: 'yes', sticky: false })
-  return wikiPostObject
+  return { wikientry: wikiPostObject, postentry: deltaLogCreationParams }
 }
 
 /* Updates the delta log hidden contents with known CMV posts -> DeltaLog posts & sticky comments */
@@ -623,7 +651,7 @@ exports.verifyThenAward = async (comment) => {
     if (issueCount === 0 && deltaLogEnabled) {
       const deltaLogPost = await findOrMakeDeltaLogPost(linkID, comment, parentThing)
       const stickiedComment = await findOrMakeStickiedComment(linkID, comment, deltaLogPost)
-      await updateDeltaLogWikiLinks(linkID, comment, deltaLogPost, stickiedComment)
+      await updateDeltaLogWikiLinks(linkID, comment, deltaLogPost.wikientry, stickiedComment)
     }
   } catch (err) {
     console.log(err)

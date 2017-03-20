@@ -42,6 +42,7 @@ _Please add yourself to this list if you've contributed:_
 * [stedop](https://github.com/stedop)
 * [beasta](https://github.com/beasta)
 * [arswaw](https://github.com/arswaw)
+* [yleong](https://github.com/yleong)
 
 ## Roadmap
 ### The first three months ✓
