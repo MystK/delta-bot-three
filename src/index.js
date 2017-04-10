@@ -16,6 +16,7 @@ const path = require('path')
 // const bodyParser = require('koa-bodyparser')
 const Reddit = require('./reddit-api-driver')
 const DeltaBoards = require('./delta-boards')
+const unesc = require('unescape')
 const {
   checkCommentForDelta,
   generateDeltaBotCommentFromDeltaComment,
@@ -546,7 +547,7 @@ const findOrMakeDeltaLogPost = async (linkID, comment, parentThing) => {
   }
   // otherwise, create it & add the delta details to appropriate section
   const deltaLogSubject = deltaLogSubjectTemplate(
-      { title: comment.link_title.replace('&amp;', '&') }
+      { title: unesc(comment.link_title) }
   )
   const deltaLogCreationParams = {
     opUsername: comment.link_author,
