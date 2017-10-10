@@ -180,16 +180,19 @@ const addOrRemoveDeltaToOrFromWiki = async ({
   linkURL,
   author,
   action,
+  mode,
 }) => { // returns flair count
-  const createWikiHiddenParams = async (content) => {
+  const createWikiHiddenParams = async (content, paramMode) => {
     try {
       const hiddenParams = {
         comment: i18n[locale].hiddenParamsComment,
         deltas: [],
+        deltasGiven: [],
       }
       if (content) {
+        const contextNumber = paramMode === 'receive' ? '2' : '3' // 2=Receive, 3=Give
         const links = _.uniq(
-            content.match(new RegExp(`/r/${subreddit}/comments/[^()[\\]]+?context=2`, 'g'))
+            content.match(new RegExp(`/r/${subreddit}/comments/.+?context=${contextNumber}`, 'g'))
         )
         const arrayFullnames = (
           _(links)
@@ -199,12 +202,15 @@ const addOrRemoveDeltaToOrFromWiki = async ({
               a[arrayIndex].push(
                   `t1_${e.replace(
                       e.slice(0, e.lastIndexOf('/') + 1), ''
-                  ).replace('?context=2', '')}`
+                  ).replace(`?context=${contextNumber}`, '')}`
               )
               return a
             }, [])
             .map(e => e.join(','))
         )
+        if (arrayFullnames.length === 0) {
+          return hiddenParams
+        }
         await new Promise(async (res, rej) => {
           _.forEach(arrayFullnames, async (fullnames) => {
             try {
@@ -251,9 +257,21 @@ const addOrRemoveDeltaToOrFromWiki = async ({
                   ab: awardedBy,
                   uu: unixUTC,
                 }
-                hiddenParams.deltas.push(params)
+                if (paramMode === 'receive') {
+                  hiddenParams.deltas.push(params)
+                } else if (paramMode === 'give') {
+                  hiddenParams.deltasGiven.push(params)
+                } else {
+                  console.log('No valid mode given for createWikiHiddenParams. Please set mode to \'give\' or \'receive\''.red)
+                }
               })
-              if (hiddenParams.deltas.length === links.length) res()
+              if (paramMode === 'receive') {
+                if (hiddenParams.deltas.length === links.length) res()
+              } else if (paramMode === 'give') {
+                if (hiddenParams.deltasGiven.length === links.length) res()
+              } else {
+                console.log('No valid mode given for createWikiHiddenParams. Please set mode to \'give\' or \'receive\''.red)
+              }
             } catch (err) {
               console.log(err)
             }
@@ -269,12 +287,14 @@ const addOrRemoveDeltaToOrFromWiki = async ({
       return {
         comment: i18n[locale].hiddenParamsComment,
         deltas: [],
+        deltasGiven: [],
       }
     }
   }
+  const userToModify = mode === 'receive' ? user : author
   let content = await getWikiContent({
     api: reddit,
-    wikiPage: `user/${user}`,
+    wikiPage: `user/${userToModify}`,
     subreddit,
   })
   // First, find all wiki pages and combine for parsing
@@ -283,23 +303,63 @@ const addOrRemoveDeltaToOrFromWiki = async ({
     content += oldContent
   }
   // Look for hidden params. If not there, create
-  const hiddenParams = parseHiddenParams(content) || await createWikiHiddenParams(content)
+  let hiddenParams = parseHiddenParams(content)
+  if (!hiddenParams) {
+    // Need to create both "deltas" and "deltasGiven" if hidden params aren't there
+    hiddenParams = await createWikiHiddenParams(content, 'receive')
+    const hiddenParamsGiven = await createWikiHiddenParams(content, 'give')
+    hiddenParams.deltasGiven = hiddenParamsGiven.deltasGiven
+  } else {
+    // If hidden params are there, deltas will almost always be there
+    // Still doesn't hurt to create a default
+    if (hiddenParams.deltas === undefined) {
+      const hiddenParamsReceived = await createWikiHiddenParams(content, 'receive')
+      hiddenParams.delta = hiddenParamsReceived.deltasGiven
+    }
+    // If hidden params are there, no existing users will have deltasGiven defined
+    // since it's a new feature. Create it
+    if (hiddenParams.deltasGiven === undefined) {
+      const hiddenParamsGiven = await createWikiHiddenParams(content, 'give')
+      hiddenParams.deltasGiven = hiddenParamsGiven.deltasGiven
+    }
+  }
   if (action === 'add') {
-    hiddenParams.deltas.push({
-      b: linkURL,
-      dc: id,
-      t: linkTitle.replace(/\)/g, 'AXDK9vhFALCkjXPmwvSB'),
-      ab: author,
-      uu: createdUTC,
-    })
+    if (mode === 'receive') {
+      hiddenParams.deltas.push({
+        b: linkURL,
+        dc: id,
+        t: linkTitle.replace(/\)/g, 'AXDK9vhFALCkjXPmwvSB'),
+        ab: author,
+        uu: createdUTC,
+      })
+    } else if (mode === 'give') {
+      hiddenParams.deltasGiven.push({
+        b: linkURL,
+        dc: id,
+        t: linkTitle.replace(/\)/g, 'AXDK9vhFALCkjXPmwvSB'),
+        ab: user,
+        uu: createdUTC,
+      })
+    } else {
+      console.log('No valid mode given for addOrRemoveDeltaToOrFromWiki. Please set mode to \'give\' or \'receive\''.red)
+    }
   } else if (action === 'remove') {
-    _.remove(hiddenParams.deltas, { dc: id })
+    if (mode === 'receive') {
+      _.remove(hiddenParams.deltas, { dc: id })
+    } else if (mode === 'give') {
+      _.remove(hiddenParams.deltasGiven, { dc: id })
+    } else {
+      console.log('No valid mode given for addOrRemoveDeltaToOrFromWiki. Please set mode to \'give\' or \'receive\''.red)
+    }
   } else console.log('No action called for addOrRemoveDeltaToOrFromWiki'.red)
   hiddenParams.deltas = _.uniqBy(hiddenParams.deltas, 'dc')
   hiddenParams.deltas = _.sortBy(hiddenParams.deltas, ['uu'])
-  const flairCount = hiddenParams.deltas.length
+  hiddenParams.deltasGiven = _.uniqBy(hiddenParams.deltasGiven, 'dc')
+  hiddenParams.deltasGiven = _.sortBy(hiddenParams.deltasGiven, ['uu'])
+  const deltaCountReceived = hiddenParams.deltas.length
+  const deltaCountGiven = hiddenParams.deltasGiven.length
   // eslint-disable-next-line
-  let newContent = `[​](HTTP://DB3PARAMSSTART\n${JSON.stringify(hiddenParams, null, 2)}\nDB3PARAMSEND)\r\n/u/${user} has received ${flairCount} delta${flairCount === 1 ? '' : 's'}:\r\n\r\n| Date | Submission | Delta Comment | Awarded By |\r\n| :------: | :------: | :------: | :------: |\r\n`
+  let newContent = `[​](HTTP://DB3PARAMSSTART\n${JSON.stringify(hiddenParams, null, 2)}\nDB3PARAMSEND)\r\n\r\n#Delta History for u/${userToModify}\r\n\r\n##Deltas Received\r\n\r\n/u/${userToModify} has received ${deltaCountReceived} delta${deltaCountReceived === 1 ? '' : 's'}:\r\n\r\n| Date | Submission | Delta Comment | Awarded By |\r\n| :------: | :------: | :------: | :------: |\r\n`
   _.forEachRight(hiddenParams.deltas, (col) => {
     const { b, dc, t, ab, uu } = col
     const date = new Date(uu * 1000)
@@ -311,16 +371,29 @@ const addOrRemoveDeltaToOrFromWiki = async ({
     )
     newContent += newRow
   })
+  newContent += `\r\n\r\n##Deltas Given\r\n\r\n/u/${userToModify} has given ${deltaCountGiven} delta${deltaCountGiven === 1 ? '' : 's'}:\r\n\r\n| Date | Submission | Delta Comment | Awarded To |\r\n| :------: | :------: | :------: | :------: |\r\n`
+  _.forEachRight(hiddenParams.deltasGiven, (col) => {
+    const { b, dc, t, ab, uu } = col
+    const date = new Date(uu * 1000)
+    const [month, day, year] = [date.getMonth() + 1, date.getDate(), date.getFullYear()]
+    const newRow = (
+          `|${month}/${day}/${year}|[${t.replace(
+              /AXDK9vhFALCkjXPmwvSB/g, ')'
+          )}](${b})|[Link](${b}${dc}?context=3)|/u/${ab}|\r\n`
+    )
+    newContent += newRow
+  })
+  const wikiEditReason = mode === 'receive' ? 'Added a delta received' : 'Added a delta given'
   const query = {
-    page: `user/${user}`,
-    reason: 'Added a delta',
+    page: `user/${userToModify}`,
+    reason: wikiEditReason,
     content: newContent,
   }
   const response = await reddit.query(
       { URL: `/r/${subreddit}/api/wiki/edit`, method: 'POST', body: stringify(query) }
   )
   if (response.error) throw Error(response.error)
-  return flairCount
+  return deltaCountReceived
 }
 
 const updateFlair = async ({ name, flairCount }) => {
@@ -652,6 +725,7 @@ exports.verifyThenAward = async (comment) => {
     if (!query) return true
     if (issueCount === 0) {
       console.log('THIS ONE IS GOOD. AWARD IT')
+      // Modify wiki for the user receiving the delta
       const flairCount = await addOrRemoveDeltaToOrFromWiki(
         {
           user: parentThing.author,
@@ -661,6 +735,20 @@ exports.verifyThenAward = async (comment) => {
           author: getCommentAuthor(comment),
           createdUTC,
           action: 'add',
+          mode: 'receive',
+        }
+      )
+      // Modify wiki for the user giving the delta
+      await addOrRemoveDeltaToOrFromWiki(
+        {
+          user: parentThing.author,
+          id,
+          linkTitle,
+          linkURL,
+          author: getCommentAuthor(comment),
+          createdUTC,
+          action: 'add',
+          mode: 'give',
         }
       )
       let text = i18n[locale].awardDelta
@@ -867,10 +955,18 @@ const checkMessagesforDeltas = async () => {
                   user: parentUserName,
                   id: comment.id,
                   action: 'remove',
+                  mode: 'receive',
                 }
               )
               await updateFlair({ name: parentUserName, flairCount })
-
+              await addOrRemoveDeltaToOrFromWiki(
+                {
+                  author: comment.author,
+                  id: comment.id,
+                  action: 'remove',
+                  mode: 'give',
+                }
+              )
               // if Delta Log is enabled, delete stuff related to that
               if (deltaLogEnabled) {
                 // grab the relevant info from the comment

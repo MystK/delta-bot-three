@@ -43,6 +43,7 @@ _Please add yourself to this list if you've contributed:_
 * [beasta](https://github.com/beasta)
 * [arswaw](https://github.com/arswaw)
 * [yleong](https://github.com/yleong)
+* [hallidev](https://github.com/hallidev)
 
 ## Roadmap
 ### The first three months ✓
