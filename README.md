@@ -19,6 +19,7 @@ The third rewrite of delta bot, created for [reddit.com/r/changemyview](https://
 1. Create a subreddit. After creation, ensure that "mod editing" for the subreddit's wiki is enabled, and make your bot account a moderator for the subreddit.
 1. Get a Reddit API key by going to https://www.reddit.com/prefs/apps/ => create another app => https://i.imgur.com/xMUa521.png
 1. Create a `credentials.json` that looks like below in `./config/credentials` folder.
+1. Create a `config.json` that looks like below in `./config` folder.
 1. `npm install -g yarn` && `yarn`
 1. Run `yarn run start-debug` or `yarn start` and it should work.
 
@@ -27,9 +28,17 @@ The third rewrite of delta bot, created for [reddit.com/r/changemyview](https://
 {
   "username": "DeltaBot3",
   "password": "PASSWORDHERE",
-  "clientID": "ebwS927PijoFvg",
-  "clientSecret": "X3-3cVNFx3Nd8_NYUrOuvmaf7wM",
-  "subreddit": "YOURnewSUBREDDIThere"
+  "clientID": "CLIENTID",
+  "clientSecret": "CLIENTSECRET",
+}
+````
+
+#### config.json (example)
+````
+{
+  "subreddit": "YOURnewSUBREDDIThere",
+  "deltaLogSubreddit": "YOUR_DEVELOPMENT_DELTALOG_SUBREDDIT_HERE",
+
 }
 ````
 
