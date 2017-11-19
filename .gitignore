@@ -6,6 +6,7 @@ dist
 .idea
 *.log
 config
+db
 
 # for vim temp files
 *.swp

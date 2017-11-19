@@ -9,6 +9,7 @@ const { stringify } = require('query-string')
 const unesc = require('unescape')
 
 const DeltaBoards = require('./delta-boards')
+const { deltaLogDB } = require('./db')
 const Reddit = require('./reddit-api-driver')
 const upgradeConfig = require('./upgrade-config')
 const {
@@ -414,36 +415,32 @@ const {
     return commentFullName
   }
 
-  /**
-   * When DB3 starts up, it doesn't have { PostId, LogId, StickyCommentId } mappings, so load them
-   */
-  const loadDeltaLogFromWiki = async () => {
-    const rawInternalWikiText = await reddit.query({
-      URL: `/r/${deltaLogSubreddit}/wiki/internal`,
-      method: 'GET',
-    })
-    if (rawInternalWikiText.error) throw Error(rawInternalWikiText)
-    const wikiTextMd = _.get(rawInternalWikiText, 'data.content_md')
-    if (isDebug) console.log('WIKI internal GET:', wikiTextMd)
-    return parseHiddenParams(wikiTextMd) || []
-  }
-  // used for storing both sticky comment info in original post, which links to the DeltaLog mirror
-  let deltaLogKnownPosts = null
-
   const wasDeltaMadeByAuthor = comment => comment.link_author === getCommentAuthor(comment)
 
-  /* Invoked after the DeltaLog post is made, so `deltaLogKnownPosts` will be populated */
+  /* Invoked after the DeltaLog post is made */
   const deltaLogStickyTemplate = _.template(i18n[locale].deltaLogSticky)
   const findOrMakeStickiedComment = async (linkID, comment, deltaLogPost) => {
-    const stickyID = deltaLogPost.wikientry.stickiedCommentID
+    let stickyID = deltaLogPost.wikientry.stickiedCommentID
     const opName = deltaLogPost.postentry.opUsername
     const deltasAwardedByOP = deltaLogPost.postentry.comments.filter(
       comm => comm.awardingUsername === opName
     ).length
     const awardStr = deltasAwardedByOP + ((deltasAwardedByOP === 1) ? ' delta' : ' deltas')
 
+    if (!wasDeltaMadeByAuthor(comment)) {
+      return true
+    }
+    if (!stickyID) {
+      const postComments = await reddit.query(`/r/${subreddit}/comments/${linkID}.json`, true)
+      const toplevelReplies = _.get(postComments, '[1].data.children')
+      _.each(toplevelReplies, (topLevelComment) => {
+        if (topLevelComment.author === botUsername && topLevelComment.stickied) {
+          stickyID = comment.name
+        }
+      })
+    }
     if (stickyID) {
-      // Update the N in 'OP has awarded N deltas...'
+    // Update the N in 'OP has awarded N deltas...'
       const stickyCommentBody = deltaLogStickyTemplate({
         username: opName,
         linkToPost: `/r/${deltaLogSubreddit}/comments/${deltaLogPost.wikientry.deltaLogPostID}`,
@@ -465,9 +462,6 @@ const {
 
       return true
     }
-    if (!wasDeltaMadeByAuthor(comment)) {
-      return true
-    }
     const stickiedCommentID = await makeComment({
       sticky: true,
       content: {
@@ -480,7 +474,9 @@ const {
         }),
       },
     })
-    deltaLogPost.wikientry.stickiedCommentID = stickiedCommentID
+    const wikiPostObject = await deltaLogDB.get(linkID)
+    wikiPostObject.stickiedCommentID = stickiedCommentID
+    await deltaLogDB.put(linkID, wikiPostObject)
     return true
   }
 
@@ -598,13 +594,11 @@ const {
     return deltaLogCreationParams
   }
 
-  const findDeltaLogPost = async (linkID) => {
-    // first, load the Delta Log database from the wiki
-    if (deltaLogKnownPosts == null) {
-      deltaLogKnownPosts = await loadDeltaLogFromWiki()
-    }
-    return _.find(deltaLogKnownPosts, { originalPostID: linkID })
-  }
+  const findDeltaLogPost = async linkID =>
+    deltaLogDB.get(linkID).then(
+      _.identity,
+      err => console.error('Failed to find delta log post', err)
+    )
 
   /* Makes delta log posts & updates OP/Other Users sections */
   const deltaLogSubjectTemplate = _.template(i18n[locale].deltaLogTitle)
@@ -643,27 +637,9 @@ const {
       originalPostURL: comment.link_url,
       deltaLogPostID: postDetails.data.id,
     }
-    deltaLogKnownPosts.push(wikiPostObject)
+    await deltaLogDB.put(linkID, wikiPostObject)
     await distinguishThing({ id: `t3_${postDetails.data.id}`, how: 'yes', sticky: false })
     return { wikientry: wikiPostObject, postentry: deltaLogCreationParams }
-  }
-
-  /**
-   * Updates the delta log hidden contents with known CMV posts -> DeltaLog posts & sticky comments
-   */
-  const updateDeltaLogWikiLinks = async () => {
-    const postParams = {
-      content: stringifyObjectToBeHidden(deltaLogKnownPosts),
-      page: 'internal',
-      reason: 'DeltaBot update',
-    }
-    const update = await reddit.query({
-      URL: `/r/${deltaLogSubreddit}/api/wiki/edit`,
-      method: 'POST',
-      body: stringify(postParams),
-    })
-    if (update.error) throw Error(update.error)
-    return update
   }
 
   exports.verifyThenAward = async (comment) => {
@@ -738,8 +714,7 @@ const {
       await makeComment({ content: query, sticky: false })
       if (issueCount === 0 && deltaLogEnabled) {
         const deltaLogPost = await findOrMakeDeltaLogPost(linkID, comment, parentThing)
-        const stickiedComment = await findOrMakeStickiedComment(linkID, comment, deltaLogPost)
-        await updateDeltaLogWikiLinks(linkID, comment, deltaLogPost.wikientry, stickiedComment)
+        await findOrMakeStickiedComment(linkID, comment, deltaLogPost)
       }
     } catch (err) {
       console.log(err)
@@ -842,7 +817,7 @@ const {
           return _.get(parentComment, 'data.children[0].data.author')
         }
         for (let i = 0; i < deleteCommentLinks.commentLinks.length; i += 1) {
-        /* eslint-disable no-await-in-loop */
+          /* eslint-disable no-await-in-loop */
           try {
             const commentLink = deleteCommentLinks.commentLinks[i].replace(/\/\?context=[\d]+$/i, '')
             const response = await reddit.query(`${commentLink}`)
@@ -944,7 +919,7 @@ const {
                       })
 
                       // delete the post from the delta log database
-                      deltaLogKnownPosts = _.reject(deltaLogKnownPosts, { originalPostID: linkId })
+                      await deltaLogDB.del(linkId)
                     } else {
                       // if there are comments, update it
                       updateDeltaLogPostFromHiddenParams(
@@ -952,9 +927,6 @@ const {
                         deltaLogPostDataJson.deltaLogPostID
                       )
                     }
-
-                    // update the internal wiki database
-                    await updateDeltaLogWikiLinks()
                   }
                 }
               }
