@@ -464,13 +464,25 @@ const wasDeltaMadeByAuthor = comment => comment.link_author === getCommentAuthor
 /* Invoked after the DeltaLog post is made, so `deltaLogKnownPosts` will be populated */
 const deltaLogStickyTemplate = _.template(i18n[locale].deltaLogSticky)
 const findOrMakeStickiedComment = async (linkID, comment, deltaLogPost) => {
-  const stickyID = deltaLogPost.wikientry.stickiedCommentID
+  let stickyID = deltaLogPost.wikientry.stickiedCommentID
   const opName = deltaLogPost.postentry.opUsername
   const deltasAwardedByOP = deltaLogPost.postentry.comments.filter(
     comm => comm.awardingUsername === opName
   ).length
   const awardStr = deltasAwardedByOP + ((deltasAwardedByOP === 1) ? ' delta' : ' deltas')
 
+  if (!wasDeltaMadeByAuthor(comment)) {
+    return true
+  }
+  if (!stickyID) {
+    const postComments = await reddit.query(`/r/${subreddit}/comments/${linkID}.json`, true)
+    const toplevelReplies = _.get(postComments, '[1].data.children')
+    _.each(toplevelReplies, (topLevelComment) => {
+      if (topLevelComment.author === botUsername && topLevelComment.stickied) {
+        stickyID = comment.name
+      }
+    })
+  }
   if (stickyID) {
     // Update the N in 'OP has awarded N deltas...'
     const stickyCommentBody = deltaLogStickyTemplate({
@@ -492,9 +504,6 @@ const findOrMakeStickiedComment = async (linkID, comment, deltaLogPost) => {
     })
     if (updateResponse.error) { console.error(updateResponse.error) }
 
-    return true
-  }
-  if (!wasDeltaMadeByAuthor(comment)) {
     return true
   }
   const stickiedCommentID = await makeComment({
@@ -765,8 +774,9 @@ exports.verifyThenAward = async (comment) => {
     await makeComment({ content: query, sticky: false })
     if (issueCount === 0 && deltaLogEnabled) {
       const deltaLogPost = await findOrMakeDeltaLogPost(linkID, comment, parentThing)
-      const stickiedComment = await findOrMakeStickiedComment(linkID, comment, deltaLogPost)
-      await updateDeltaLogWikiLinks(linkID, comment, deltaLogPost.wikientry, stickiedComment)
+      await updateDeltaLogWikiLinks()
+      await findOrMakeStickiedComment(linkID, comment, deltaLogPost)
+      await updateDeltaLogWikiLinks()
     }
   } catch (err) {
     console.log(err)
