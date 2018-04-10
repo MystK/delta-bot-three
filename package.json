@@ -34,6 +34,7 @@
   "dependencies": {
     "colors": "^1.1.2",
     "eslint": "^4.15.0",
+    "firebase-admin": "^5.12.0",
     "forever": "^0.15.3",
     "form-urlencoded": "^1.5.0",
     "fs-promise": "^2.0.0",
@@ -47,7 +48,8 @@
     "promisify-node": "^0.4.0",
     "query-string": "^4.3.2",
     "snoowrap": "^1.15.2",
-    "unescape": "^0.2.0"
+    "unescape": "^0.2.0",
+    "uuid": "^3.2.1"
   },
   "jest": {
     "testEnvironment": "node"
