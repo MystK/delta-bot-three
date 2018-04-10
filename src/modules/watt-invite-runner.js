@@ -156,7 +156,7 @@ class WattInviteRunner extends DeltaBotModule {
               \n\nhttp://projectwatt.com/invite/${newInvite.wattPostUid}
               \n\n**This link is a password to contribute, edit or delete your projectWATT article. Do not share it.**
               \n\nC) Both A & B - this would be ideal, but we understand if you don't have time or would just prefer one over the other.
-              \n\nFeel free to message us if you have any questions or concerns.
+              \n\nFeel free to [message us](https://www.reddit.com/message/compose?to=%2Fr%2Fchangemyview) if you have any questions or concerns.
               \n\nThanks for reading!
               `,
             }
@@ -183,7 +183,7 @@ class WattInviteRunner extends DeltaBotModule {
             \n\nhttp://projectwatt.com/invite/${newInvite.wattPostUid}
             \n\n**This link is a password to contribute, edit or delete your projectWATT article. Do not share it.**
             \n\nC) Both A & B - this would be ideal, but we understand if you don't have time or would just prefer one over the other.
-            \n\nFeel free to message us if you have any questions or concerns.
+            \n\nFeel free to [message us](https://www.reddit.com/message/compose?to=%2Fr%2Fchangemyview) if you have any questions or concerns.
             \n\nThanks for reading!
             `,
           }
