@@ -1,0 +1,12 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "node2",
+      "request": "launch",
+      "name": "Launch Delta Bot 3",
+      "program": "${workspaceRoot}\\src\\index.js",
+      "cwd": "${workspaceRoot}"
+    }
+  ]
+}

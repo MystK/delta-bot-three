@@ -1,0 +1,55 @@
+{
+  "name": "delta-bot-three",
+  "version": "5.2.0",
+  "description": "The third rewrite of delta bot",
+  "main": "dist/index.js",
+  "scripts": {
+    "start": "nodemon ./src/index.js -x node -w ./i18n -w ./src -- --inspect --enable-delta-log",
+    "startProduction": "forever cleanlogs && forever start --uid \"production\" -o out.log -e err.log ./src/index.js --enable-delta-log",
+    "start-debug": "nodemon ./src/index.js -x node -w ./i18n -w ./src -- --bypass-op-check --enable-delta-log",
+    "start-debug-inspector": "node-debug ./src/index.js --bypass-op-check --enable-delta-log",
+    "test": "npm run eslint && jest",
+    "eslint": "eslint ./src",
+    "eslint-fix": "eslint ./src --fix",
+    "list": "forever list",
+    "cleanlogs": "forever cleanlogs",
+    "stop": "forever stop production"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MystK/delta-bot-three.git"
+  },
+  "author": "Antoine P <MystK@users.noreply.github.com>",
+  "license": "\tLGPL-3.0",
+  "bugs": {
+    "url": "https://github.com/MystK/delta-bot-three/issues"
+  },
+  "homepage": "https://github.com/MystK/delta-bot-three#readme",
+  "devDependencies": {
+    "eslint-config-airbnb-base": "^11.1.1",
+    "eslint-plugin-import": "^2.2.0",
+    "jest-cli": "^19.0.2",
+    "nodemon": "^1.11.0"
+  },
+  "dependencies": {
+    "colors": "^1.1.2",
+    "eslint": "^4.15.0",
+    "forever": "^0.15.3",
+    "form-urlencoded": "^1.5.0",
+    "fs-promise": "^2.0.0",
+    "html-entities": "^1.2.0",
+    "level": "^2.1.1",
+    "lodash": "^4.17.4",
+    "mkdirp": "^0.5.1",
+    "moment": "^2.17.1",
+    "mz": "^2.7.0",
+    "node-fetch": "^1.6.3",
+    "promisify-node": "^0.4.0",
+    "query-string": "^4.3.2",
+    "snoowrap": "^1.15.2",
+    "unescape": "^0.2.0"
+  },
+  "jest": {
+    "testEnvironment": "node"
+  }
+}

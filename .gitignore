@@ -1,0 +1,12 @@
+node_modules
+*credentials.json
+*-session.json
+state.json
+dist
+.idea
+*.log
+config
+db
+
+# for vim temp files
+*.swp

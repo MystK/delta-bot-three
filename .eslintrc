@@ -1,0 +1,31 @@
+{
+  "extends": "airbnb-base",
+  "rules": {
+    "semi": [2, "never"],
+    "no-await-in-loop": [0],
+    "no-restricted-syntax": [
+      "error",
+      "ForInStatement",
+      "LabeledStatement",
+      "WithStatement"
+    ],
+    "camelcase": [0],
+    "no-console": [0],
+    "no-continue": [0],
+    "no-case-declarations": [0],
+    "no-fallthrough": [0],
+    "no-loop-func": [0],
+    "linebreak-style": [0],
+    "global-require": [0],
+    "no-param-reassign": [2, {"props": false}],
+    "import/prefer-default-export": [0],
+    "import/no-dynamic-require": [0],
+    "comma-dangle": [2, {
+        "arrays": "always-multiline",
+        "objects": "always-multiline",
+        "imports": "always-multiline",
+        "exports": "always-multiline",
+        "functions": "never"
+    }]
+  }
+}
