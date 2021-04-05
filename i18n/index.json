@@ -1,0 +1,25 @@
+{
+  "en-us": {
+    "andWithSpace": " and ",
+    "awardDelta": "Confirmed: 1 delta awarded to /u/USERNAME ([DELTAS∆](/r/SUBREDDIT/wiki/user/USERNAME)).",
+    "noAward": {
+      "littleText": "The length of your comment suggests that you haven't properly explained how /u/PARENTUSERNAME changed your view (comment rule 4).\n\nDeltaBot is able to rescan edited comments. Please edit your comment with the required explanation.",
+      "op": "You can't award OP a delta.\n\nAllowing this would wrongly suggest that you can post here with the aim of convincing others.\n\nIf you were explaining when/how to award a delta, please use a reddit quote for the symbol next time.",
+      "db3": "You can't award DeltaBot a delta.",
+      "self": "You can't award yourself a delta.",
+      "issueCount": "You have ISSUECOUNT issues.",
+      "rejected": "This delta has been rejected."
+    },
+    "global": "\n\n^[Delta System Explained](https://www.reddit.com/r/changemyview/wiki/deltasystem) ^| ^[Deltaboards](https://www.reddit.com/r/changemyview/wiki/deltaboards)",
+    "hiddenParamsComment": "This_is_hidden_text_for_DB3_to_parse._Please_contact_the_author_of_DB3_if_you_see_this",
+    "firstDeltaSubject": "Your first delta",
+    "firstDeltaMessage": "Congratulations - you've earned your first delta!\n\nAs you may already know, a delta (∆) is given when a comment has changed someone's view. For a more detailed explanation of the delta system and DeltaBot, [see here](https://www.reddit.com/r/changemyview/wiki/deltasystem).\n\nI have updated your user flair and created [your own wiki page](https://reddit.com/r/<%= subreddit %>/wiki/user/<%= username %>) which will be updated every time you earn a delta. If you do well, you may find yourself on our [deltaboards](http://www.reddit.com/r/<%= subreddit %>/wiki/deltaboards).\n\nGood luck, and happy CMVing!\n\n---\n\n[*^(I am a bot)*](https://github.com/MystK/delta-bot-three)*^(, and this action was performed automatically. )*[*^(Please contact the moderators)*](http://www.reddit.com/message/compose?to=/r/<%= subreddit %>)*^( if you have any further questions or concerns.)*",
+    "deltaLogTitle": "Deltas awarded in \"<%= title %>\"",
+    "deltaLogContent": "Below is a list of the deltas awarded in [this post](<%= linkToPost %>).\n\nPlease note that a change of view [is not necessarily a reversal](https://www.reddit.com/r/changemyview/wiki/index#wiki_what_is_a_.27view.27.3F), and that OP awarding a delta doesn't mean the conversation has ended.\n\nFor a full explanation of the delta system, [see here](https://www.reddit.com/r/changemyview/wiki/deltasystem).\n\n-----\n\n# Deltas from OP /u/<%= opUsername %>\n\n[](HTTP://DB3-FROMOP)\n\n#Deltas from Other Users\n\n[](HTTP://DB3-FROMOTHER)",
+    "deltaLogSticky": "/u/<%= username %> (OP) has awarded <%= opawarded %> in this post.\n\nAll comments that earned deltas (from OP or other users) are listed [**here**](<%= linkToPost %>), in /r/<%= deltaLogSubreddit %>.\n\nPlease note that a change of view [doesn't necessarily mean a reversal](https://www.reddit.com/r/changemyview/wiki/index#wiki_what_is_a_.27view.27.3F), or that the conversation has ended.\n\n^[Delta System Explained](https://www.reddit.com/r/changemyview/wiki/deltasystem) ^| ^[Deltaboards](https://www.reddit.com/r/changemyview/wiki/deltaboards)",
+    "deltaLogOPEntry": "* 1 delta from OP to /u/<%= awardedUsername %> for \"[<%= awardedText %>](<%= awardedLink %>/?context=1)\"\n",
+    "deltaLogOtherEntry": "* 1 delta from /u/<%= awardingUsername %> to /u/<%= awardedUsername %> for \"[<%= awardedText %>](<%= awardedLink %>/?context=1)\"\n",
+    "deltaLogMultipleOthers": "* <%= count %> deltas from <%= users %> to /u/<%= awardedUsername %> for \"[<%= awardedText %>](<%= awardedLink %>/?context=1)\"\n",
+    "deltaLogNoneYet": "* None yet."
+  }
+}
